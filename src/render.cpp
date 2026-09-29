@@ -75,8 +75,8 @@ int Render::run()
         mNextPixelLock.unlock();
 
         // Lovely progress bar
-        const int    barWidth = 70;
-        const double progress = (((double)nextY * mWidth + nextX) / (mWidth * mHeight));
+        const int   barWidth = 70;
+        const float progress = (((float)nextY * mWidth + nextX) / (mWidth * mHeight));
         std::cout << "[";
         int pos = barWidth * progress;
         for (int i = 0; i < barWidth; ++i)
@@ -170,7 +170,7 @@ void Render::renderPixel()
             {
                 // Check BVH
                 Ray                          outRay;
-                double                       t = std::numeric_limits<double>::infinity();
+                float                        t = std::numeric_limits<float>::infinity();
                 Color                        color;
                 object::Primitive::Collision collision = mBvh.intersects(inRay, outRay, t, color);
                 inRay                                  = std::move(outRay);
@@ -245,7 +245,7 @@ void Render::setupImgPlane()
      * plane is aspectRatio x 1 "unit", so normalize and divide by the resolution.
      */
 
-    double aspectRatio = (double)mWidth / mHeight;
+    float aspectRatio = (float)mWidth / mHeight;
 
     mPlaneHeight     = mScene.mCamera.mTop * (-1.0 / mHeight);
     Vector widthNorm = Vector::scross3(mScene.mCamera.mFront, mScene.mCamera.mTop).norm();
@@ -260,8 +260,8 @@ void Render::getImgPlanePixelRandomDefocus(int y, int x, Vector &origin, Vector 
 {
     // Find a random point on the lens disk, shoot it through the center of
     // an image plane pixel
-    double randomRadius = randomDouble() * mScene.mCamera.mLensDiskDiameter;
-    double randomAngle  = randomDouble() * 2.0 * M_PI;
+    float randomRadius = randomDouble() * mScene.mCamera.mLensDiskDiameter;
+    float randomAngle  = randomDouble() * 2.0 * M_PI;
 
     // Convert polar to cartesian, scale relative to camera axes, add in camera origin
     Vector camRight        = Vector::scross3(mScene.mCamera.mFront, mScene.mCamera.mTop).norm();

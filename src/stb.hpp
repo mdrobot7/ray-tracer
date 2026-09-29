@@ -24,7 +24,7 @@ class STBImage
      * texture (u, v) coordinates. u and v are in the
      * range [0, 1.0].
      */
-    Color getUv(double u, double v);
+    Color getUv(float u, float v);
 
     /**
      * @brief Get a color byte [0-255] from the image.
@@ -33,10 +33,10 @@ class STBImage
     unsigned char get(int y, int x, int color);
 
     /**
-     * @brief Get a color double [0-1.0] from the image.
+     * @brief Get a color float [0-1.0] from the image.
      * Image is in RGB(A) order.
      */
-    double getDbl(int y, int x, int color);
+    float getDbl(int y, int x, int color);
 
     /**
      * @brief Frees the memory allocated for the image.

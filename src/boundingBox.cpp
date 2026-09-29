@@ -15,8 +15,7 @@ BoundingBox::BoundingBox()
     }
 }
 
-BoundingBox::BoundingBox(double minX, double maxX, double minY, double maxY, double minZ,
-                         double maxZ)
+BoundingBox::BoundingBox(float minX, float maxX, float minY, float maxY, float minZ, float maxZ)
 {
     mIntersections[V_X][0] = minX - sPadding;
     mIntersections[V_X][1] = maxX + sPadding;
@@ -26,21 +25,21 @@ BoundingBox::BoundingBox(double minX, double maxX, double minY, double maxY, dou
     mIntersections[V_Z][1] = maxZ + sPadding;
 }
 
-bool BoundingBox::intersectsBox(const Ray &r, double &t)
+bool BoundingBox::intersectsBox(const Ray &r, float &t)
 {
-    double minMaxInt = std::numeric_limits<double>::infinity();
-    double maxMinInt = -std::numeric_limits<double>::infinity();
+    float minMaxInt = std::numeric_limits<float>::infinity();
+    float maxMinInt = -std::numeric_limits<float>::infinity();
 
     // Find the intersection time range for each axis and track the
     // max of the minInts and min of the maxInts.
     for (int i = 0; i < 3; i++)
     {
-        double int0       = intersectionTime(r, mIntersections[i][0], i);
-        double int1       = intersectionTime(r, mIntersections[i][1], i);
-        double thisMinInt = MIN(int0, int1);
-        double thisMaxInt = MAX(int0, int1);
-        maxMinInt         = thisMinInt > maxMinInt ? thisMinInt : maxMinInt;
-        minMaxInt         = thisMaxInt < minMaxInt ? thisMaxInt : minMaxInt;
+        float int0       = intersectionTime(r, mIntersections[i][0], i);
+        float int1       = intersectionTime(r, mIntersections[i][1], i);
+        float thisMinInt = MIN(int0, int1);
+        float thisMaxInt = MAX(int0, int1);
+        maxMinInt        = thisMinInt > maxMinInt ? thisMinInt : maxMinInt;
+        minMaxInt        = thisMaxInt < minMaxInt ? thisMaxInt : minMaxInt;
     }
 
     // Check if the ranges overlap, also ignore boxes that are *fully*
@@ -50,11 +49,11 @@ bool BoundingBox::intersectsBox(const Ray &r, double &t)
         t = maxMinInt;
         return true;
     }
-    t = std::numeric_limits<double>::infinity();
+    t = std::numeric_limits<float>::infinity();
     return false;
 }
 
-double BoundingBox::intersectionTime(const Ray &r, double val, int axis)
+float BoundingBox::intersectionTime(const Ray &r, float val, int axis)
 {
     // Solve P = O + td for t
     return (val - r.mOrigin[axis]) / r.mDir[axis];
@@ -79,9 +78,9 @@ BoundingBox &BoundingBox::merge(const BoundingBox &other)
 
 int BoundingBox::largestAxis()
 {
-    double x = mIntersections[V_X][1] - mIntersections[V_X][0];
-    double y = mIntersections[V_Y][1] - mIntersections[V_Y][0];
-    double z = mIntersections[V_Z][1] - mIntersections[V_Z][0];
+    float x = mIntersections[V_X][1] - mIntersections[V_X][0];
+    float y = mIntersections[V_Y][1] - mIntersections[V_Y][0];
+    float z = mIntersections[V_Z][1] - mIntersections[V_Z][0];
     if (x > y && x > z)
     {
         return V_X;

@@ -102,7 +102,7 @@ object::Primitive::Collision BoundingVolumeHierarchy::intersects(const Ray &inco
         double thisT        = t;
         Color  thisColor    = Color(color);
         collision           = mPrimitive->collide(thisIncoming, thisT, thisColor);
-        if (collision != object::Primitive::Collision::MISSED && thisT < t)
+        if (collision != object::Primitive::Collision::MISSED && thisT < t && thisT > sMinT)
         {
             // We hit something closer than our current mark, so remember it
             outgoing = Ray(thisIncoming);
@@ -117,7 +117,6 @@ object::Primitive::Collision BoundingVolumeHierarchy::intersects(const Ray &inco
     bool   intLeft  = mLeft->mBbox.intersectsBox(incoming, tLeft);
     bool   intRight = mRight->mBbox.intersectsBox(incoming, tRight);
 
-    // TODO: ignore nodes that are closer than t
     if (intLeft)
     {
         collision = mLeft->intersects(incoming, outgoing, t, color);

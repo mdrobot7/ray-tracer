@@ -9,6 +9,9 @@
 class BoundingVolumeHierarchy
 {
   public:
+    // Intersection time must be larger than this, reduces shadow acne
+    static constexpr double sMinT = 0.001;
+
     object::Primitive *mPrimitive;
     BoundingBox        mBbox;
 

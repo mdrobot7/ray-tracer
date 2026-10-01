@@ -1,6 +1,7 @@
 #include "render.hpp"
 #include "bvh.hpp"
 #include "common.hpp"
+#include "stb.hpp"
 #include "vector.hpp"
 #include <chrono>
 #include <cstdint>
@@ -129,6 +130,9 @@ int Render::save(std::string filename)
         }
     }
     out.close();
+
+    stbi_write_bmp((filename + ".bmp").c_str(), mWidth, mHeight, 3, mFb);
+
     return 0;
 }
 

@@ -20,15 +20,15 @@ Perlin::Perlin()
     generatePermutations(mPermZ);
 }
 
-double Perlin::get(const Vector &vec)
+float Perlin::get(const Vector &vec)
 {
     // Increase frequency
     Vector sVec = vec * sFrequency;
 
     // Trilinear interpolation with random vectors
-    double u = sVec[V_X] - std::floor(sVec[V_X]);
-    double v = sVec[V_Y] - std::floor(sVec[V_Y]);
-    double w = sVec[V_Z] - std::floor(sVec[V_Z]);
+    float u = sVec[V_X] - std::floor(sVec[V_X]);
+    float v = sVec[V_Y] - std::floor(sVec[V_Y]);
+    float w = sVec[V_Z] - std::floor(sVec[V_Z]);
 
     int    i = (int)(sVec[V_X]);
     int    j = (int)(sVec[V_Y]);
@@ -50,13 +50,13 @@ double Perlin::get(const Vector &vec)
     return (interpolate(c, u, v, w) + 1.0) * 0.5; // Remap from [-1, 1] to [0, 1]
 }
 
-double Perlin::interpolate(const Vector c[2][2][2], double u, double v, double w)
+float Perlin::interpolate(const Vector c[2][2][2], float u, float v, float w)
 {
     // Hermitian smoothing
-    double uu    = u * u * (3 - 2 * u);
-    double vv    = v * v * (3 - 2 * v);
-    double ww    = w * w * (3 - 2 * w);
-    double accum = 0.0;
+    float uu    = u * u * (3 - 2 * u);
+    float vv    = v * v * (3 - 2 * v);
+    float ww    = w * w * (3 - 2 * w);
+    float accum = 0.0;
 
     for (int i = 0; i < 2; i++)
     {
@@ -65,10 +65,10 @@ double Perlin::interpolate(const Vector c[2][2][2], double u, double v, double w
             for (int k = 0; k < 2; k++)
             {
                 Vector weight(u - i, v - j, w - k);
-                double term1 = (i * uu + (1 - i) * (1 - uu));
-                double term2 = (j * vv + (1 - j) * (1 - vv));
-                double term3 = (k * ww + (1 - k) * (1 - ww));
-                accum += term1 * term2 * term3 * Vector::dot(c[i][j][k], weight);
+                float  term1  = (i * uu + (1 - i) * (1 - uu));
+                float  term2  = (j * vv + (1 - j) * (1 - vv));
+                float  term3  = (k * ww + (1 - k) * (1 - ww));
+                accum        += term1 * term2 * term3 * Vector::dot(c[i][j][k], weight);
             }
         }
     }

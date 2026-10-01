@@ -39,11 +39,11 @@ extern thread_local std::uniform_real_distribution<> randDist; // Uniform [-1.0,
                                                                // defined in render.cpp
 
 /**
- * @brief Returns a random double in range [0, 1)
+ * @brief Returns a random float in range [0, 1)
  *
- * @return double
+ * @return float
  */
-static inline double randomDouble()
+static inline float randomDouble()
 {
     return (randDist(randGen) + 1.0) / 2.0;
 }

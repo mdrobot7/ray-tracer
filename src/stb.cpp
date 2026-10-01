@@ -27,7 +27,7 @@ Color STBImage::get(int y, int x)
     return Color(Vector(offset[0] / 255.0, offset[1] / 255.0, offset[2] / 255.0));
 }
 
-Color STBImage::getUv(double u, double v)
+Color STBImage::getUv(float u, float v)
 {
     return get(v * (mHeight - 1), u * (mWidth - 1));
 }
@@ -37,7 +37,7 @@ unsigned char STBImage::get(int y, int x, int color)
     return get(y, x)[color];
 }
 
-double STBImage::getDbl(int y, int x, int color)
+float STBImage::getDbl(int y, int x, int color)
 {
     return get(y, x, color) / 255.0;
 }

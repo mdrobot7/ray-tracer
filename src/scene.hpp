@@ -24,11 +24,11 @@ class Primitive
         MISSED,
     };
 
-    static constexpr double sRefractionGlass = 1.458;
-    static double sEmissiveGain; // Boost light brightness to a max of (sEmissiveGain * [1, 1, 1])
+    static constexpr float sRefractionGlass = 1.458;
+    static float sEmissiveGain; // Boost light brightness to a max of (sEmissiveGain * [1, 1, 1])
 
     enum Color::Surface mSurface;
-    double              mIndexOfRefraction;
+    float               mIndexOfRefraction;
     Color               mColor;
     STBImage           *mTexture;
     BoundingBox         mBoundingBox;
@@ -47,7 +47,7 @@ class Primitive
      * @param color Color of the object at the collision point.
      * @return enum Collision Type of collision that occurred
      */
-    virtual enum Collision collide(Ray &incoming, double &t, Color &color) const = 0;
+    virtual enum Collision collide(Ray &incoming, float &t, Color &color) const = 0;
 
     /**
      * @brief Return the bounding box for this primitive.
@@ -59,7 +59,7 @@ class Primitive
     /**
      * @brief Perform a texture lookup, returning a color.
      */
-    void textureLookup(const Vector &intersection, double u, double v, Color &color) const;
+    void textureLookup(const Vector &intersection, float u, float v, Color &color) const;
 
     // Ray collision helpers (common to all object types)
     /**
@@ -103,7 +103,7 @@ class Primitive
      * @return false If the ray has been absorbed
      */
     bool dielectric(Ray &incoming, const Vector &intersection, const Vector &normal,
-                    double indexOfRefraction) const;
+                    float indexOfRefraction) const;
 };
 
 /**
@@ -121,14 +121,14 @@ class Triangle : public Primitive
 
     Triangle();
     Triangle(Vector vertices[3], Vector texcoords[3], enum Color::Surface surface,
-             double indexOfRefraction, const Color &color);
+             float indexOfRefraction, const Color &color);
     Triangle(nlohmann::json &json);
 
-    enum Collision collide(Ray &incoming, double &t, Color &color) const override;
+    enum Collision collide(Ray &incoming, float &t, Color &color) const override;
     BoundingBox    boundingBox() const override;
 
   private:
-    void textureLookup(double alpha, double beta, double gamma, const Vector &intersection,
+    void textureLookup(float alpha, float beta, float gamma, const Vector &intersection,
                        Color &color) const;
 };
 
@@ -136,18 +136,18 @@ class Quadric : public Primitive
 {
   public:
     Vector      mOrigin;
-    double      mA2, mB2, mC2, mD2; // Squared parameters (can be negative)
-    double      mMaxOnAxis;
-    double      mMaxOffAxis;
+    float       mA2, mB2, mC2, mD2; // Squared parameters (can be negative)
+    float       mMaxOnAxis;
+    float       mMaxOffAxis;
     std::string mAxis; // Axis to bound
 
     Quadric();
-    Quadric(const Vector &center, double a2, double b2, double c2, double d2, double maxOnAxis,
-            double maxOffAxis, const std::string &axis, enum Color::Surface surface,
-            double indexOfRefraction, const Color &color);
+    Quadric(const Vector &center, float a2, float b2, float c2, float d2, float maxOnAxis,
+            float maxOffAxis, const std::string &axis, enum Color::Surface surface,
+            float indexOfRefraction, const Color &color);
     Quadric(nlohmann::json json);
 
-    virtual enum Collision collide(Ray &incoming, double &t, Color &color) const override;
+    virtual enum Collision collide(Ray &incoming, float &t, Color &color) const override;
     virtual BoundingBox    boundingBox() const override;
 
   private:
@@ -163,14 +163,14 @@ class Sphere : public Primitive
 {
   public:
     Vector mOrigin;
-    double mRadius;
+    float  mRadius;
 
     Sphere();
-    Sphere(const Vector &origin, double radius, enum Color::Surface surface,
-           double indexOfRefraction, const Color &color);
+    Sphere(const Vector &origin, float radius, enum Color::Surface surface, float indexOfRefraction,
+           const Color &color);
     Sphere(nlohmann::json &json);
 
-    virtual enum Collision collide(Ray &incoming, double &t, Color &color) const override;
+    virtual enum Collision collide(Ray &incoming, float &t, Color &color) const override;
     virtual BoundingBox    boundingBox() const override;
 
   private:
@@ -186,14 +186,14 @@ class Quad : public Primitive
 
     Quad();
     Quad(const Vector &origin, const Vector &width, const Vector &height,
-         enum Color::Surface surface, double indexOfRefraction, const Color &color);
+         enum Color::Surface surface, float indexOfRefraction, const Color &color);
     Quad(nlohmann::json &json);
 
-    enum Collision collide(Ray &incoming, double &t, Color &color) const override;
+    enum Collision collide(Ray &incoming, float &t, Color &color) const override;
     BoundingBox    boundingBox() const override;
 
   private:
-    void   textureLookup(double alpha, double beta, const Vector &intersection, Color &color) const;
+    void   textureLookup(float alpha, float beta, const Vector &intersection, Color &color) const;
     Vector mW; // Used for intersection checking
 };
 
@@ -205,11 +205,11 @@ class Model : public Primitive
     tinyobj::ObjReader &mObj;
 
     Model(tinyobj::ObjReader &obj, const Vector &origin, const Vector &front, const Vector &top,
-          const Vector &scale, enum Color::Surface surface, double indexOfRefraction,
+          const Vector &scale, enum Color::Surface surface, float indexOfRefraction,
           const Color &color);
     Model(nlohmann::json &json, tinyobj::ObjReader &obj);
 
-    enum Collision collide(Ray &incoming, double &t, Color &color) const override;
+    enum Collision collide(Ray &incoming, float &t, Color &color) const override;
     // No texture lookup support
     BoundingBox boundingBox() const override;
 };
@@ -217,12 +217,12 @@ class Model : public Primitive
 class SphereVolume : public Sphere
 {
   public:
-    double mNegInvDensity;
+    float mNegInvDensity;
 
-    SphereVolume(const Vector &origin, double radius, double density, Color &color);
+    SphereVolume(const Vector &origin, float radius, float density, Color &color);
     SphereVolume(nlohmann::json &json);
 
-    enum Collision collide(Ray &incoming, double &t, Color &color) const override;
+    enum Collision collide(Ray &incoming, float &t, Color &color) const override;
     // No texture lookup support
     BoundingBox boundingBox() const override;
 };
@@ -238,12 +238,12 @@ class Camera
     Vector mOrigin;
     Vector mFront;
     Vector mTop;
-    double mFocalLength;
-    double mLensDiskDiameter;
+    float  mFocalLength;
+    float  mLensDiskDiameter;
 
     Camera();
-    Camera(const Vector &origin, const Vector &front, const Vector &top, double focalLength,
-           double emissiveGain);
+    Camera(const Vector &origin, const Vector &front, const Vector &top, float focalLength,
+           float emissiveGain);
     Camera(nlohmann::json &json);
 };
 

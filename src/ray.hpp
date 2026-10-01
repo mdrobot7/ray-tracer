@@ -11,7 +11,7 @@ class Ray
 
     Color mColor;
 
-    double mIndexOfRefraction; // Index of refraction of the material we're currently in
+    float mIndexOfRefraction; // Index of refraction of the material we're currently in
 
     Ray();
     Ray(Vector origin, Vector dir);

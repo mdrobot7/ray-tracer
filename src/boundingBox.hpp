@@ -5,19 +5,19 @@
 class BoundingBox
 {
   public:
-    static constexpr double sPadding = 0.001; // Padding between the object and bounding box
+    static constexpr float sPadding = 0.001; // Padding between the object and bounding box
 
-    double mIntersections[3][2];
+    float mIntersections[3][2];
 
     BoundingBox();
-    BoundingBox(double minX, double maxX, double minY, double maxY, double minZ, double maxZ);
+    BoundingBox(float minX, float maxX, float minY, float maxY, float minZ, float maxZ);
 
     /**
      * @brief Returns true if a ray intersects with this
      * bounding box. Also returns the time (t) that the
      * ray hits the box, or infinity if no boxes were hit.
      */
-    bool intersectsBox(const Ray &r, double &t);
+    bool intersectsBox(const Ray &r, float &t);
 
     /**
      * @brief Merges another bounding box into this one.
@@ -41,5 +41,5 @@ class BoundingBox
      * @brief Calculate time in which the ray intersects a
      * particular point along a particular axis.
      */
-    double intersectionTime(const Ray &r, double val, int axis);
+    float intersectionTime(const Ray &r, float val, int axis);
 };

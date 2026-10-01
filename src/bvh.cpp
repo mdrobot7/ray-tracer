@@ -81,7 +81,7 @@ BoundingVolumeHierarchy::~BoundingVolumeHierarchy()
 }
 
 object::Primitive::Collision BoundingVolumeHierarchy::intersects(const Ray &incoming, Ray &outgoing,
-                                                                 double &t, Color &color)
+                                                                 float &t, Color &color)
 {
     // Traverse down any nodes that intersect the ray
     // (regardless of what side of the tree they're on).
@@ -98,11 +98,11 @@ object::Primitive::Collision BoundingVolumeHierarchy::intersects(const Ray &inco
     if (mPrimitive)
     {
         // Reached a leaf
-        Ray    thisIncoming = Ray(incoming);
-        double thisT        = t;
-        Color  thisColor    = Color(color);
-        collision           = mPrimitive->collide(thisIncoming, thisT, thisColor);
-        if (collision != object::Primitive::Collision::MISSED && thisT < t)
+        Ray   thisIncoming = Ray(incoming);
+        float thisT        = t;
+        Color thisColor    = Color(color);
+        collision          = mPrimitive->collide(thisIncoming, thisT, thisColor);
+        if (collision != object::Primitive::Collision::MISSED && thisT < t && thisT > sMinT)
         {
             // We hit something closer than our current mark, so remember it
             outgoing = Ray(thisIncoming);
@@ -113,11 +113,10 @@ object::Primitive::Collision BoundingVolumeHierarchy::intersects(const Ray &inco
         return object::Primitive::Collision::MISSED;
     }
 
-    double tLeft, tRight;
-    bool   intLeft  = mLeft->mBbox.intersectsBox(incoming, tLeft);
-    bool   intRight = mRight->mBbox.intersectsBox(incoming, tRight);
+    float tLeft, tRight;
+    bool  intLeft  = mLeft->mBbox.intersectsBox(incoming, tLeft);
+    bool  intRight = mRight->mBbox.intersectsBox(incoming, tRight);
 
-    // TODO: ignore nodes that are closer than t
     if (intLeft)
     {
         collision = mLeft->intersects(incoming, outgoing, t, color);
@@ -125,7 +124,7 @@ object::Primitive::Collision BoundingVolumeHierarchy::intersects(const Ray &inco
     if (intRight)
     {
         Ray                          thisOutgoing = Ray();
-        double                       thisT        = t;
+        float                        thisT        = t;
         Color                        thisColor    = Color(color);
         object::Primitive::Collision rightCollision =
             mRight->intersects(incoming, thisOutgoing, thisT, thisColor);

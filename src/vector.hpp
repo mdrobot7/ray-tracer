@@ -13,14 +13,14 @@
 class Vector
 {
   public:
-    double x, y, z;
+    float x, y, z;
 
     constexpr Vector() : x(0), y(0), z(0) {}
     ~Vector() = default;
     constexpr Vector(const Vector &copy_from) : x(copy_from.x), y(copy_from.y), z(copy_from.z) {}
     constexpr Vector(Vector &&move_from) : x(move_from.x), y(move_from.y), z(move_from.z) {}
-    constexpr Vector(double double_arr[3]) : x(double_arr[0]), y(double_arr[1]), z(double_arr[2]) {}
-    constexpr Vector(double x, double y, double z) : x(x), y(y), z(z) {}
+    constexpr Vector(float float_arr[3]) : x(float_arr[0]), y(float_arr[1]), z(float_arr[2]) {}
+    constexpr Vector(float x, float y, float z) : x(x), y(y), z(z) {}
 
     constexpr Vector &operator=(const Vector &copy_from)
     {
@@ -30,7 +30,7 @@ class Vector
         return *this;
     }
 
-    constexpr double &operator[](size_t index)
+    constexpr float &operator[](size_t index)
     {
         switch (index)
         {
@@ -45,7 +45,7 @@ class Vector
         }
     }
 
-    constexpr double operator[](size_t index) const
+    constexpr float operator[](size_t index) const
     {
         switch (index)
         {
@@ -78,12 +78,12 @@ class Vector
     /**
      * @brief 3-dimensional dot product of two vectors
      */
-    static constexpr double dot(const Vector &a, const Vector &b)
+    static constexpr float dot(const Vector &a, const Vector &b)
     {
         return a.x * b.x + a.y * b.y + a.z * b.z;
     }
 
-    constexpr double dot(const Vector &a)
+    constexpr float dot(const Vector &a)
     {
         return dot(*this, a);
     }
@@ -147,17 +147,17 @@ class Vector
     /**
      * @brief 3-dimensional vector multiply with a scalar
      */
-    friend constexpr Vector operator*(const Vector &a, const double scale)
+    friend constexpr Vector operator*(const Vector &a, const float scale)
     {
         return Vector(a.x * scale, a.y * scale, a.z * scale);
     }
 
-    friend constexpr Vector operator*(const double scale, const Vector &a)
+    friend constexpr Vector operator*(const float scale, const Vector &a)
     {
         return Vector(a.x * scale, a.y * scale, a.z * scale);
     }
 
-    constexpr Vector &operator*=(const double scale)
+    constexpr Vector &operator*=(const float scale)
     {
         x *= scale;
         y *= scale;
@@ -173,7 +173,7 @@ class Vector
     /**
      * @brief 3-dimensional vector length.
      */
-    constexpr double length() const
+    constexpr float length() const
     {
         return std::sqrt(x * x + y * y + z * z);
     }
@@ -190,10 +190,10 @@ class Vector
         }
         else
         {
-            double len  = length();
-            x          /= len;
-            y          /= len;
-            z          /= len;
+            float len  = length();
+            x         /= len;
+            y         /= len;
+            z         /= len;
         }
         return *this;
     }
@@ -214,7 +214,7 @@ class Vector
      * @brief Clamp all elements of a vector in the range [0, clip]
      * (inclusive).
      */
-    constexpr Vector &clip(double max)
+    constexpr Vector &clip(float max)
     {
         x = CLAMP(x, 0, max);
         y = CLAMP(y, 0, max);

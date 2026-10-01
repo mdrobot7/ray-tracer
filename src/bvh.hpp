@@ -9,6 +9,9 @@
 class BoundingVolumeHierarchy
 {
   public:
+    // Intersection time must be larger than this, reduces shadow acne
+    static constexpr float sMinT = 0.001;
+
     object::Primitive *mPrimitive;
     BoundingBox        mBbox;
 
@@ -28,7 +31,7 @@ class BoundingVolumeHierarchy
      * If any level of the BVH results in misses for both the
      * left and right child the method returns NULL.
      */
-    object::Primitive::Collision intersects(const Ray &incoming, Ray &outgoing, double &t,
+    object::Primitive::Collision intersects(const Ray &incoming, Ray &outgoing, float &t,
                                             Color &color);
 
   private:

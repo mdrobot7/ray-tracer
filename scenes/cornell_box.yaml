@@ -1,0 +1,200 @@
+---
+# Standard Cornell box with a checkerboard floor. Contains five spheres, two triangles, one cone, and a monkey
+camera:
+  origin: [0, 50, -0.5]
+  front:  [0, 0, -1]
+  top:    [0, 1, 0]
+  focalLength: 0.5
+  emissiveGain: 2.5
+  defocusAngle: 0
+
+textures:
+  checkerboard: &checkerboardTex
+    path: "./assets/checkerboard.jpg"
+  duweReact: &duweReactTex
+    path: "./assets/duwe_react.jpg"
+
+models:
+  suzanne: &suzanneObj
+    path: "./assets/suzanne.obj"
+
+primitives:
+  floor: &floor
+    type: "quad"
+    width:  [200, 0, 0]
+    height: [0, 0, -200]
+    surface: "diffuse"
+    texture: *checkerboardTex
+    perlin: false
+  leftWall: &leftWall
+    type: "quad"
+    width:  [0, 0, -200]
+    height: [0, 200, 0]
+    surface: "diffuse"
+    texture: 0x00FF00
+    perlin: false
+  backWall: &backWall
+    type: "quad"
+    width:  [200, 0, 0]
+    height: [0, 200, 0]
+    surface: "diffuse"
+    texture: 0xFFFFFF
+    perlin: false
+  rightWall: &rightWall
+    type: "quad"
+    width:  [0, 0, 200]
+    height: [0, 200, 0]
+    surface: "diffuse"
+    texture: 0xFF0000
+    perlin: false
+  ceiling: &ceiling
+    type: "quad"
+    width:  [-200, 0, 0]
+    height: [0, 0, -200]
+    surface: "diffuse"
+    texture: 0xFFFFFF
+    perlin: false
+  light: &light
+    type: "quad"
+    width:  [-100, 0, 0]
+    height: [0, 0, -100]
+    surface: "emissive"
+    texture: 0xFFFFFF
+    perlin: false
+  frontWall: &frontWall
+    type: "quad"
+    width:  [-200, 0, 0]
+    height: [0, 200, 0]
+    surface: "diffuse"
+    texture: 0xFFFFFF
+    perlin: false
+  duweSphere: &duweSphere
+    type: "sphere"
+    radius: 10
+    surface: "diffuse"
+    texture: &duweReactTex
+    perlin: false
+  mirrorSphere: &mirrorSphere
+    type: "sphere"
+    radius: 20
+    surface: "specular"
+    texture: 0x000000
+    perlin: false
+  glassSphere: &glassSphere
+    type: "sphere"
+    radius: 25
+    surface: "dielectric"
+    indexOfRefraction: 0.685
+    texture: 0xFFFFFF
+    perlin: false
+  duweTriangle: &duweTriangle
+    type: "triangle"
+    vertices: # In winding order
+      - [40, 40, -180]
+      - [-40, 40, -180]
+      - [0, 70, -180]
+    texcoords: # [u, v]
+      - [0, 0]
+      - [1, 0]
+      - [1, 1]
+    surface: "diffuse"
+    texture: &duweReactTex
+    perlin: false
+  cloudSphere: &cloudSphere
+    type: "sphereVolume"
+    radius: 15
+    density: 0.05
+    surface: "diffuse"
+    texture: 0xFF8000
+    perlin: false
+  perlinSphere: &perlinSphere
+    type: "sphere"
+    radius: 20
+    surface: "diffuse"
+    texture: 0x5C79E0
+    perlin: true
+  roofAboveGlass: &roofAboveGlass
+    type: "triangle"
+    vertices:
+      - [100, 70, -200]
+      - [50, 70, -80]
+      - [0, 70, -200]
+    texcoords:
+      - [0, 0]
+      - [0, 0]
+      - [0, 0]
+    surface: "diffuse"
+    texture: 0xDA3CE6
+    perlin: false
+  cone: &cone
+    # An upside-down cone with a height of 10
+    type: "quadric"
+    a2: 1
+    b2: -1
+    c2: 1
+    d2: 0
+    maxOnAxis: 15
+    maxOffAxis: 15
+    axis: "y"
+    surface: "diffuse"
+    texture: 0x5C79E0
+    perlin: false
+  suzanne: &suzanne
+    type: "obj"
+    path: *suzanneObj
+    surface: "diffuse"
+    texture: 0x3D7DE3
+    perlin: false
+
+instances:
+  floor:
+    primitive: *floor
+    origin: [-30, 20, -60]
+  leftWall:
+    primitive: *leftWall
+    origin: [-30, 20, -60]
+  backWall:
+    primitive: *backWall
+    origin: [-30, 20, -60]
+  rightWall:
+    primitive: *rightWall
+    origin: [-30, 20, -60]
+  ceiling:
+    primitive: *ceiling
+    origin: [-30, 20, -60]
+  light:
+    primitive: *light
+    origin: [-30, 20, -60]
+  frontWall:
+    primitive: *frontWall
+    origin: [-30, 20, -60]
+  duweSphere:
+    primitive: *duweSphere
+    origin: [-30, 20, -60]
+  mirrorSphere:
+    primitive: *mirrorSphere
+    origin: [-30, 20, -60]
+  glassSphere:
+    primitive: *glassSphere
+    origin: [-30, 20, -60]
+  duweTriangle:
+    primitive: *duweTriangle
+    # Triangles are immutable
+  cloudSphere:
+    primitive: *cloudSphere
+    origin: [-30, 20, -60]
+  perlinSphere:
+    primitive: *perlinSphere
+    origin: [-30, 20, -60]
+  roofAboveGlass:
+    primitive: *roofAboveGlass
+    # Triangles are immutable
+  cone:
+    primitive: *cone
+    origin: [-30, 20, -60]
+  suzanne:
+    primitive: *suzanne
+    origin: [-30, 20, -60]
+    front: [0, 0, 1]
+    top: [0, 1, 0]
+    scale: [10, 10, 10]

@@ -10,7 +10,7 @@ make all
 ```
 
 ### Software Requirements
-- Software: `gcc, g++` supporting C++11 or newer, Python 3.11+
+- Software: `gcc, g++` supporting C++11 or newer, Make, CMake, Python 3.11+
 - Documentation: MiKTeX or something that provides `pdflatex` and LaTeX packages.
 
 ### Makefile Targets
@@ -21,7 +21,8 @@ make all
 - `clean`: Clean the build environment.
 
 ## Third Party Libraries (/lib)
-- nlohmann's JSON parsing library
+- yaml-cpp
+  - Best yaml parser that supports anchors and references.
 - TinyOBJLoader
   - RapidOBJ is a newer, faster version of TinyOBJLoader but it doesn't support the Windows/MSYS combo. It's not Windows or Linux so it doesn't know what to do
 - stb, specifically `stb_image.h`

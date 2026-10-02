@@ -6,13 +6,17 @@ LIB_DIR := ./lib
 STB_PATH := $(LIB_DIR)/stb
 
 NLOHMANN_JSON_PATH := $(LIB_DIR)/json/single_include
+YAML_CPP_PATH := $(LIB_DIR)/yaml-cpp
+YAML_CPP_BUILD_DIR := $(YAML_CPP_PATH)/build
+YAML_CPP_INC_DIR := $(YAML_CPP_PATH)/include
+YAML_CPP_LIBYAMLCPP_PATH := $(YAML_CPP_BUILD_DIR)/libyaml-cpp.a
 
 TINYOBJLOADER_PATH := $(LIB_DIR)/tinyobjloader
 
 CC := g++
 COMMON_FLAGS := -O3 -g -lpthread
 CFLAGS := -Wall -Wextra
-CPPFLAGS := -MMD -MP -I$(STB_PATH) -I$(NLOHMANN_JSON_PATH) -I$(TINYOBJLOADER_PATH)
+CPPFLAGS := -MMD -MP -I$(STB_PATH) -I$(NLOHMANN_JSON_PATH) -I$(TINYOBJLOADER_PATH) -I$(YAML_CPP_INC_DIR)
 LDFLAGS := --gc-sections
 
 SOURCES := $(wildcard $(SRC_DIR)/*.cpp) $(wildcard $(SRC_DIR)/*/*.cpp) # Shell "find" sucks on Windows, so we're doing this
@@ -46,8 +50,8 @@ endif
 all: $(BUILD_DIR)/$(TARGET_EXE) compiledb
 
 # Link C sources into final executable
-$(BUILD_DIR)/$(TARGET_EXE): $(OBJS)
-	$(CC) $(COMMON_FLAGS) $(LDFLAGS) $(OBJS) -o $@
+$(BUILD_DIR)/$(TARGET_EXE): $(OBJS) libyaml-cpp
+	$(CC) $(COMMON_FLAGS) $(LDFLAGS) $(OBJS) $(YAML_CPP_LIBYAMLCPP_PATH) -o $@
 
 # Build C sources
 $(BUILD_DIR)/%.cpp.o: %.cpp
@@ -58,6 +62,10 @@ $(BUILD_DIR)/%.cpp.o: %.cpp
 $(BUILD_DIR)/%.s.o: %.s
 	mkdir -p $(dir $@)
 	$(CC) $(COMMON_FLAGS) $(CPPFLAGS) $(DFU_CPPFLAGS) $(CFLAGS) -x assembler-with-cpp -c $< -o $@
+
+libyaml-cpp:
+	mkdir -p $(YAML_CPP_BUILD_DIR)
+	cd $(YAML_CPP_BUILD_DIR) && cmake .. && make
 
 # Generate ./build/compile_commands.json using compiledb
 compiledb: $(BUILD_DIR)/$(TARGET_EXE)

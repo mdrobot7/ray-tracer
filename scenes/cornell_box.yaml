@@ -2,8 +2,7 @@
 # Standard Cornell box with a checkerboard floor. Contains five spheres, two triangles, one cone, and a monkey
 camera:
   origin: [0, 50, -0.5]
-  front:  [0, 0, -1]
-  top:    [0, 1, 0]
+  rotation: [0, 180, 0] # Face -Z: Rotate around the Y axis by 180 degrees
   focalLength: 0.5
   emissiveGain: 2.5
   defocusAngle: 0
@@ -195,6 +194,5 @@ instances:
   suzanne:
     primitive: *suzanne
     origin: [-30, 20, -60]
-    front: [0, 0, 1]
-    top: [0, 1, 0]
+    rotation: [0, 0, 0]
     scale: [10, 10, 10]

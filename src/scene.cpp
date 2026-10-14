@@ -2,7 +2,7 @@
 #include "color.hpp"
 #include "common.hpp"
 #include "vector.hpp"
-#include <fstream>
+#include "yaml-cpp/yaml.h"
 #include <stdexcept>
 #include <string>
 
@@ -12,9 +12,9 @@ namespace object
 float Primitive::sEmissiveGain = 1;
 
 Primitive::Primitive() {}
-Primitive::Primitive(nlohmann::json &json)
+Primitive::Primitive(const YAML::Node &node)
 {
-    (void)json;
+    (void)node;
 }
 BoundingBox Primitive::boundingBox() const
 {
@@ -142,13 +142,15 @@ Triangle::Triangle(Vector vertices[3], Vector texcoords[3], enum Color::Surface 
     mBoundingBox = boundingBox();
 }
 
-Triangle::Triangle(nlohmann::json &json)
+Triangle::Triangle(const YAML::Node &node)
 {
     for (int i = 0; i < 3; i++)
     {
-        mVertices[i] =
-            Vector(json["vertices"][i]["x"], json["vertices"][i]["y"], json["vertices"][i]["z"]);
-        mTexcoords[i] = Vector(json["texcoords"][i]["u"], json["texcoords"][i]["v"], 0.0);
+        mVertices[i]  = Vector(node["vertices"][i]["x"].as<float>(),
+                               node["vertices"][i]["y"].as<float>(),
+                               node["vertices"][i]["z"].as<float>());
+        mTexcoords[i] = Vector(
+            node["texcoords"][i]["u"].as<float>(), node["texcoords"][i]["v"].as<float>(), 0.0);
     }
     mTexture = NULL;
     mPerlin  = NULL;
@@ -258,16 +260,16 @@ Quadric::Quadric(const Vector &center, float a2, float b2, float c2, float d2, f
     mBoundingBox       = boundingBox();
 }
 
-Quadric::Quadric(nlohmann::json json)
+Quadric::Quadric(const YAML::Node &node)
 {
-    mOrigin     = Vector(json["x"], json["y"], json["z"]);
-    mA2         = json["a2"];
-    mB2         = json["b2"];
-    mC2         = json["c2"];
-    mD2         = json["d2"];
-    mMaxOnAxis  = json["maxOnAxis"];
-    mMaxOffAxis = json["maxOffAxis"];
-    mAxis       = json["axis"];
+    mOrigin     = Vector(node["x"].as<float>(), node["y"].as<float>(), node["z"].as<float>());
+    mA2         = node["a2"].as<float>();
+    mB2         = node["b2"].as<float>();
+    mC2         = node["c2"].as<float>();
+    mD2         = node["d2"].as<float>();
+    mMaxOnAxis  = node["maxOnAxis"].as<float>();
+    mMaxOffAxis = node["maxOffAxis"].as<float>();
+    mAxis       = node["axis"].as<std::string>();
     if (mAxis != "x" && mAxis != "y" && mAxis != "z")
     {
         throw std::invalid_argument("Invalid axis");
@@ -415,10 +417,10 @@ Sphere::Sphere(const Vector &center, float radius, enum Color::Surface surface,
     mBoundingBox       = boundingBox();
 }
 
-Sphere::Sphere(nlohmann::json &json)
+Sphere::Sphere(const YAML::Node &node)
 {
-    mOrigin  = Vector(json["x"], json["y"], json["z"]);
-    mRadius  = json["radius"];
+    mOrigin  = Vector(node["x"].as<float>(), node["y"].as<float>(), node["z"].as<float>());
+    mRadius  = node["radius"].as<float>();
     mTexture = NULL;
     mPerlin  = NULL;
 }
@@ -520,11 +522,17 @@ Quad::Quad(const Vector &origin, const Vector &width, const Vector &height,
     mBoundingBox = boundingBox();
 }
 
-Quad::Quad(nlohmann::json &json)
+Quad::Quad(const YAML::Node &node)
 {
-    mOrigin  = Vector(json["origin"]["x"], json["origin"]["y"], json["origin"]["z"]);
-    mWidth   = Vector(json["width"]["x"], json["width"]["y"], json["width"]["z"]);
-    mHeight  = Vector(json["height"]["x"], json["height"]["y"], json["height"]["z"]);
+    mOrigin  = Vector(node["origin"]["x"].as<float>(),
+                      node["origin"]["y"].as<float>(),
+                      node["origin"]["z"].as<float>());
+    mWidth   = Vector(node["width"]["x"].as<float>(),
+                      node["width"]["y"].as<float>(),
+                      node["width"]["z"].as<float>());
+    mHeight  = Vector(node["height"]["x"].as<float>(),
+                      node["height"]["y"].as<float>(),
+                      node["height"]["z"].as<float>());
     mTexture = NULL;
     mPerlin  = NULL;
 
@@ -614,13 +622,22 @@ Model::Model(tinyobj::ObjReader &obj, const Vector &origin, const Vector &front,
     mBoundingBox       = boundingBox();
 }
 
-Model::Model(nlohmann::json &json, tinyobj::ObjReader &obj) : mObj(obj)
+Model::Model(const YAML::Node &node, tinyobj::ObjReader &obj) : mObj(obj)
 {
-    mModelMatrix =
-        ModelMatrix(Vector(json["origin"]["x"], json["origin"]["y"], json["origin"]["z"]),
-                    Vector(json["front"]["x"], json["front"]["y"], json["front"]["z"]).norm(),
-                    Vector(json["top"]["x"], json["top"]["y"], json["top"]["z"]).norm(),
-                    Vector(json["scale"]["x"], json["scale"]["y"], json["scale"]["z"]));
+    mModelMatrix = ModelMatrix(Vector(node["origin"]["x"].as<float>(),
+                                      node["origin"]["y"].as<float>(),
+                                      node["origin"]["z"].as<float>()),
+                               Vector(node["front"]["x"].as<float>(),
+                                      node["front"]["y"].as<float>(),
+                                      node["front"]["z"].as<float>())
+                                   .norm(),
+                               Vector(node["top"]["x"].as<float>(),
+                                      node["top"]["y"].as<float>(),
+                                      node["top"]["z"].as<float>())
+                                   .norm(),
+                               Vector(node["scale"]["x"].as<float>(),
+                                      node["scale"]["y"].as<float>(),
+                                      node["scale"]["z"].as<float>()));
 }
 
 enum Primitive::Collision Model::collide(Ray &incoming, float &t, Color &color) const
@@ -749,9 +766,9 @@ SphereVolume::SphereVolume(const Vector &origin, float radius, float density, Co
     mNegInvDensity = -1.0 / density;
 }
 
-SphereVolume::SphereVolume(nlohmann::json &json) : Sphere(json)
+SphereVolume::SphereVolume(const YAML::Node &node) : Sphere(node)
 {
-    mNegInvDensity = -1.0 / (float)(json["density"]);
+    mNegInvDensity = -1.0 / node["density"].as<float>();
 }
 
 enum Primitive::Collision SphereVolume::collide(Ray &incoming, float &t, Color &color) const
@@ -823,15 +840,23 @@ Camera::Camera(const Vector &origin, const Vector &front, const Vector &top, flo
     Primitive::sEmissiveGain = emissiveGain;
 }
 
-Camera::Camera(nlohmann::json &json)
+Camera::Camera(const YAML::Node &node)
 {
-    mOrigin           = Vector(json["origin"]["x"], json["origin"]["y"], json["origin"]["z"]);
-    mFront            = Vector(json["front"]["x"], json["front"]["y"], json["front"]["z"]).norm();
-    mTop              = Vector(json["top"]["x"], json["top"]["y"], json["top"]["z"]).norm();
-    mFocalLength      = json["focalLength"];
-    mLensDiskDiameter = tan((float)(json["defocusAngle"]) * (M_PI / 180.0)) *
-                        mFocalLength; // tan(angle) = opp / adj
-    Primitive::sEmissiveGain = json["emissiveGain"];
+    mOrigin                  = Vector(node["origin"]["x"].as<float>(),
+                                      node["origin"]["y"].as<float>(),
+                                      node["origin"]["z"].as<float>());
+    mFront                   = Vector(node["front"]["x"].as<float>(),
+                                      node["front"]["y"].as<float>(),
+                                      node["front"]["z"].as<float>())
+                                   .norm();
+    mTop                     = Vector(node["top"]["x"].as<float>(),
+                                      node["top"]["y"].as<float>(),
+                                      node["top"]["z"].as<float>())
+                                   .norm();
+    mFocalLength             = node["focalLength"].as<float>();
+    mLensDiskDiameter        = tan(node["defocusAngle"].as<float>() * (M_PI / 180.0)) *
+                               mFocalLength; // tan(angle) = opp / adj
+    Primitive::sEmissiveGain = node["emissiveGain"].as<float>();
 }
 } // namespace object
 
@@ -845,23 +870,21 @@ Scene::~Scene()
     }
 }
 
-void Scene::load(std::string sceneJsonPath)
+void Scene::load(std::string sceneYamlPath)
 {
-    std::ifstream f(sceneJsonPath);
-
-    using json = nlohmann::json;
-    json data  = json::parse(f);
+    YAML::Node data = YAML::LoadFile(sceneYamlPath);
 
     tinyobj::ObjReaderConfig readerConfig;
     readerConfig.mtl_search_path = "./assets/materials"; // Hardcoded, fight me
 
     mPerlin = Perlin();
 
-    // Look at scenes/sample.json for the format
+    // Look at scenes/sample.yaml for the format
     mCamera = object::Camera(data["camera"]);
-    for (json i : data["objects"])
+    for (const YAML::Node &i : data["objects"])
     {
-        if (i["type"] == "obj")
+        std::string type = i["type"].as<std::string>();
+        if (type == "obj")
         {
             // Attributes and vertices are stored in the tinyobj::ObjReader object.
             // We could spend time deep-copying them out, but that seems foolish.
@@ -871,7 +894,7 @@ void Scene::load(std::string sceneJsonPath)
             size_t fileIndex;
             for (fileIndex = 0; fileIndex < mObjFilenames.size(); fileIndex++)
             {
-                if (mObjFilenames[fileIndex] == i["path"])
+                if (mObjFilenames[fileIndex] == i["path"].as<std::string>())
                 {
                     break;
                 }
@@ -882,85 +905,82 @@ void Scene::load(std::string sceneJsonPath)
             }
             else
             {
+                std::string path = i["path"].as<std::string>();
                 mObjReaders.push_back(tinyobj::ObjReader());
-                mObjFilenames.push_back(i["path"]);
-                if (!mObjReaders.back().ParseFromFile(i["path"], readerConfig))
+                mObjFilenames.push_back(path);
+                if (!mObjReaders.back().ParseFromFile(path, readerConfig))
                 {
-                    f.close();
                     throw std::invalid_argument("OBJ file parse failed");
                 }
                 mPrimitives.push_back(std::make_unique<object::Model>(i, mObjReaders.back()));
             }
         }
-        else if (i["type"] == "sphere")
+        else if (type == "sphere")
         {
             mPrimitives.push_back(std::make_unique<object::Sphere>(i));
         }
-        else if (i["type"] == "quadric")
+        else if (type == "quadric")
         {
             mPrimitives.push_back(std::make_unique<object::Quadric>(i));
         }
-        else if (i["type"] == "triangle")
+        else if (type == "triangle")
         {
             mPrimitives.push_back(std::make_unique<object::Triangle>(i));
         }
-        else if (i["type"] == "quad")
+        else if (type == "quad")
         {
             mPrimitives.push_back(std::make_unique<object::Quad>(i));
         }
-        else if (i["type"] == "sphereVolume")
+        else if (type == "sphereVolume")
         {
             mPrimitives.push_back(std::make_unique<object::SphereVolume>(i));
         }
         else
         {
-            f.close();
-            throw std::invalid_argument("Invalid object in JSON");
+            throw std::invalid_argument("Invalid object in scene");
         }
 
         // Fill in common attributes
         auto &p         = mPrimitives.back();
-        p->mSurface     = Color::stringToSurface(i["surface"]);
+        p->mSurface     = Color::stringToSurface(i["surface"].as<std::string>());
         p->mBoundingBox = p->boundingBox();
         if (p->mSurface == Color::Surface::DIELECTRIC)
         {
-            p->mIndexOfRefraction = i["indexOfRefraction"];
+            p->mIndexOfRefraction = i["indexOfRefraction"].as<float>();
         }
-        if (i["perlin"])
+        if (i["perlin"].as<bool>())
         {
             p->mPerlin = &mPerlin;
         }
         try
         {
-            int color = std::stoi((std::string)(i["texture"]), 0, 16);
-            p->mColor = Color::intToColor(color);
+            p->mColor = Color::intToColor(i["texture"].as<int>());
         }
-        catch (std::invalid_argument const &)
+        catch (YAML::BadConversion const &)
         {
-            if (i["type"] == "sphereVolume")
+            if (type == "sphereVolume")
             {
                 throw std::invalid_argument("Can't assign textures to volumes.");
             }
 
             // Texture is a path instead of a color
-            size_t fileIndex;
+            size_t      fileIndex;
+            std::string texture = i["texture"].as<std::string>();
             for (fileIndex = 0; fileIndex < mTextureFilenames.size(); fileIndex++)
             {
-                if (mTextureFilenames[fileIndex] == i["texture"])
+                if (mTextureFilenames[fileIndex] == texture)
                 {
                     break;
                 }
             }
             if (fileIndex == mTextureFilenames.size())
             {
-                mTextures.push_back(std::make_unique<STBImage>(i["texture"]));
-                mTextureFilenames.push_back(i["texture"]);
+                mTextures.push_back(std::make_unique<STBImage>(texture));
+                mTextureFilenames.push_back(texture);
             }
             p->mTexture = mTextures[fileIndex].get();
         }
     }
-
-    f.close();
 
     if (mPrimitives.size() == 0)
     {

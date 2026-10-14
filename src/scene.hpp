@@ -1,12 +1,12 @@
 #pragma once
 #include "boundingBox.hpp"
 #include "color.hpp"
-#include "nlohmann/json.hpp"
 #include "perlin.hpp"
 #include "ray.hpp"
 #include "stb.hpp"
 #include "tiny_obj_loader.h"
 #include "vector.hpp"
+#include "yaml-cpp/yaml.h"
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -35,7 +35,7 @@ class Primitive
     Perlin             *mPerlin;
 
     Primitive();
-    Primitive(nlohmann::json &json);
+    Primitive(const YAML::Node &node);
 
     virtual ~Primitive() {};
 
@@ -122,7 +122,7 @@ class Triangle : public Primitive
     Triangle();
     Triangle(Vector vertices[3], Vector texcoords[3], enum Color::Surface surface,
              float indexOfRefraction, const Color &color);
-    Triangle(nlohmann::json &json);
+    Triangle(const YAML::Node &node);
 
     enum Collision collide(Ray &incoming, float &t, Color &color) const override;
     BoundingBox    boundingBox() const override;
@@ -145,7 +145,7 @@ class Quadric : public Primitive
     Quadric(const Vector &center, float a2, float b2, float c2, float d2, float maxOnAxis,
             float maxOffAxis, const std::string &axis, enum Color::Surface surface,
             float indexOfRefraction, const Color &color);
-    Quadric(nlohmann::json json);
+    Quadric(const YAML::Node &node);
 
     virtual enum Collision collide(Ray &incoming, float &t, Color &color) const override;
     virtual BoundingBox    boundingBox() const override;
@@ -168,7 +168,7 @@ class Sphere : public Primitive
     Sphere();
     Sphere(const Vector &origin, float radius, enum Color::Surface surface, float indexOfRefraction,
            const Color &color);
-    Sphere(nlohmann::json &json);
+    Sphere(const YAML::Node &node);
 
     virtual enum Collision collide(Ray &incoming, float &t, Color &color) const override;
     virtual BoundingBox    boundingBox() const override;
@@ -187,7 +187,7 @@ class Quad : public Primitive
     Quad();
     Quad(const Vector &origin, const Vector &width, const Vector &height,
          enum Color::Surface surface, float indexOfRefraction, const Color &color);
-    Quad(nlohmann::json &json);
+    Quad(const YAML::Node &node);
 
     enum Collision collide(Ray &incoming, float &t, Color &color) const override;
     BoundingBox    boundingBox() const override;
@@ -207,7 +207,7 @@ class Model : public Primitive
     Model(tinyobj::ObjReader &obj, const Vector &origin, const Vector &front, const Vector &top,
           const Vector &scale, enum Color::Surface surface, float indexOfRefraction,
           const Color &color);
-    Model(nlohmann::json &json, tinyobj::ObjReader &obj);
+    Model(const YAML::Node &node, tinyobj::ObjReader &obj);
 
     enum Collision collide(Ray &incoming, float &t, Color &color) const override;
     // No texture lookup support
@@ -220,7 +220,7 @@ class SphereVolume : public Sphere
     float mNegInvDensity;
 
     SphereVolume(const Vector &origin, float radius, float density, Color &color);
-    SphereVolume(nlohmann::json &json);
+    SphereVolume(const YAML::Node &node);
 
     enum Collision collide(Ray &incoming, float &t, Color &color) const override;
     // No texture lookup support
@@ -244,7 +244,7 @@ class Camera
     Camera();
     Camera(const Vector &origin, const Vector &front, const Vector &top, float focalLength,
            float emissiveGain);
-    Camera(nlohmann::json &json);
+    Camera(const YAML::Node &node);
 };
 
 }; // namespace object
@@ -271,12 +271,12 @@ class Scene
     ~Scene();
 
     /**
-     * @brief Load the scene data from a JSON file and
+     * @brief Load the scene data from a YAML file and
      * populate all of the objects at their correct coordinates.
      *
-     * @param sceneJsonPath
+     * @param sceneYamlPath
      */
-    void load(std::string sceneJsonPath);
+    void load(std::string sceneYamlPath);
 
   private:
 };

@@ -603,12 +603,12 @@ void Quad::textureLookup(float alpha, float beta, const Vector &intersection, Co
     Primitive::textureLookup(intersection, alpha, beta, color);
 }
 
-Model::Model(tinyobj::ObjReader &obj, const Vector &origin, const Vector &front, const Vector &top,
+Model::Model(tinyobj::ObjReader &obj, const Vector &origin, const Vector &rotation,
              const Vector &scale, enum Color::Surface surface, float indexOfRefraction,
              const Color &color)
     : mObj(obj)
 {
-    mModelMatrix       = ModelMatrix(origin, Vector::snorm(front), Vector::snorm(top), scale);
+    mMatrix            = Matrix(origin, rotation, scale);
     mSurface           = surface;
     mIndexOfRefraction = indexOfRefraction;
     mColor             = color;
@@ -617,10 +617,8 @@ Model::Model(tinyobj::ObjReader &obj, const Vector &origin, const Vector &front,
 
 Model::Model(const YAML::Node &node, tinyobj::ObjReader &obj) : mObj(obj)
 {
-    mModelMatrix = ModelMatrix(node["origin"].as<Vector>(),
-                               node["front"].as<Vector>().norm(),
-                               node["top"].as<Vector>().norm(),
-                               node["scale"].as<Vector>());
+    mMatrix = Matrix(
+        node["origin"].as<Vector>(), node["rotation"].as<Vector>(), node["scale"].as<Vector>());
 }
 
 enum Primitive::Collision Model::collide(Ray &incoming, float &t, Color &color) const
@@ -665,7 +663,7 @@ enum Primitive::Collision Model::collide(Ray &incoming, float &t, Color &color) 
 
                 // Handle scaling, rotation, and positioning (model matrix).
                 // Do on the fly so we can do proper object instancing (vertex shader-style)
-                mModelMatrix.mul(tri.mVertices[i]);
+                mMatrix.mul(tri.mVertices[i]);
             }
             // Fill in surface normal assuming CCW winding order (standard for OBJ and OpenGL)
             tri.mNormal.cross3(tri.mVertices[1] - tri.mVertices[0],
@@ -722,7 +720,7 @@ BoundingBox Model::boundingBox() const
                 }
 
                 // Handle scaling, rotation, and positioning (model matrix).
-                mModelMatrix.mul(v);
+                mMatrix.mul(v);
 
                 if (v[V_X] < minX)
                     minX = v[V_X];

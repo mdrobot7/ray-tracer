@@ -200,11 +200,11 @@ class Quad : public Primitive
 class Model : public Primitive
 {
   public:
-    ModelMatrix mModelMatrix;
+    Matrix mMatrix;
 
     tinyobj::ObjReader &mObj;
 
-    Model(tinyobj::ObjReader &obj, const Vector &origin, const Vector &front, const Vector &top,
+    Model(tinyobj::ObjReader &obj, const Vector &origin, const Vector &rotation,
           const Vector &scale, enum Color::Surface surface, float indexOfRefraction,
           const Color &color);
     Model(const YAML::Node &node, tinyobj::ObjReader &obj);

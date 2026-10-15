@@ -3,6 +3,7 @@
 #include "common.hpp"
 #include "vector.hpp"
 #include "yaml-cpp/yaml.h"
+#include <iostream>
 #include <stdexcept>
 #include <string>
 
@@ -146,11 +147,9 @@ Triangle::Triangle(const YAML::Node &node)
 {
     for (int i = 0; i < 3; i++)
     {
-        mVertices[i]  = Vector(node["vertices"][i]["x"].as<float>(),
-                               node["vertices"][i]["y"].as<float>(),
-                               node["vertices"][i]["z"].as<float>());
-        mTexcoords[i] = Vector(
-            node["texcoords"][i]["u"].as<float>(), node["texcoords"][i]["v"].as<float>(), 0.0);
+        mVertices[i] = node["vertices"][i].as<Vector>();
+        mTexcoords[i] =
+            Vector(node["texcoords"][i][0].as<float>(), node["texcoords"][i][1].as<float>(), 0.0);
     }
     mTexture = NULL;
     mPerlin  = NULL;
@@ -262,7 +261,7 @@ Quadric::Quadric(const Vector &center, float a2, float b2, float c2, float d2, f
 
 Quadric::Quadric(const YAML::Node &node)
 {
-    mOrigin     = Vector(node["x"].as<float>(), node["y"].as<float>(), node["z"].as<float>());
+    mOrigin     = node["origin"].as<Vector>();
     mA2         = node["a2"].as<float>();
     mB2         = node["b2"].as<float>();
     mC2         = node["c2"].as<float>();
@@ -419,7 +418,7 @@ Sphere::Sphere(const Vector &center, float radius, enum Color::Surface surface,
 
 Sphere::Sphere(const YAML::Node &node)
 {
-    mOrigin  = Vector(node["x"].as<float>(), node["y"].as<float>(), node["z"].as<float>());
+    mOrigin  = node["origin"].as<Vector>();
     mRadius  = node["radius"].as<float>();
     mTexture = NULL;
     mPerlin  = NULL;
@@ -524,15 +523,9 @@ Quad::Quad(const Vector &origin, const Vector &width, const Vector &height,
 
 Quad::Quad(const YAML::Node &node)
 {
-    mOrigin  = Vector(node["origin"]["x"].as<float>(),
-                      node["origin"]["y"].as<float>(),
-                      node["origin"]["z"].as<float>());
-    mWidth   = Vector(node["width"]["x"].as<float>(),
-                      node["width"]["y"].as<float>(),
-                      node["width"]["z"].as<float>());
-    mHeight  = Vector(node["height"]["x"].as<float>(),
-                      node["height"]["y"].as<float>(),
-                      node["height"]["z"].as<float>());
+    mOrigin  = node["origin"].as<Vector>();
+    mWidth   = node["width"].as<Vector>();
+    mHeight  = node["height"].as<Vector>();
     mTexture = NULL;
     mPerlin  = NULL;
 
@@ -624,20 +617,10 @@ Model::Model(tinyobj::ObjReader &obj, const Vector &origin, const Vector &front,
 
 Model::Model(const YAML::Node &node, tinyobj::ObjReader &obj) : mObj(obj)
 {
-    mModelMatrix = ModelMatrix(Vector(node["origin"]["x"].as<float>(),
-                                      node["origin"]["y"].as<float>(),
-                                      node["origin"]["z"].as<float>()),
-                               Vector(node["front"]["x"].as<float>(),
-                                      node["front"]["y"].as<float>(),
-                                      node["front"]["z"].as<float>())
-                                   .norm(),
-                               Vector(node["top"]["x"].as<float>(),
-                                      node["top"]["y"].as<float>(),
-                                      node["top"]["z"].as<float>())
-                                   .norm(),
-                               Vector(node["scale"]["x"].as<float>(),
-                                      node["scale"]["y"].as<float>(),
-                                      node["scale"]["z"].as<float>()));
+    mModelMatrix = ModelMatrix(node["origin"].as<Vector>(),
+                               node["front"].as<Vector>().norm(),
+                               node["top"].as<Vector>().norm(),
+                               node["scale"].as<Vector>());
 }
 
 enum Primitive::Collision Model::collide(Ray &incoming, float &t, Color &color) const
@@ -842,20 +825,12 @@ Camera::Camera(const Vector &origin, const Vector &front, const Vector &top, flo
 
 Camera::Camera(const YAML::Node &node)
 {
-    mOrigin                  = Vector(node["origin"]["x"].as<float>(),
-                                      node["origin"]["y"].as<float>(),
-                                      node["origin"]["z"].as<float>());
-    mFront                   = Vector(node["front"]["x"].as<float>(),
-                                      node["front"]["y"].as<float>(),
-                                      node["front"]["z"].as<float>())
-                                   .norm();
-    mTop                     = Vector(node["top"]["x"].as<float>(),
-                                      node["top"]["y"].as<float>(),
-                                      node["top"]["z"].as<float>())
-                                   .norm();
-    mFocalLength             = node["focalLength"].as<float>();
-    mLensDiskDiameter        = tan(node["defocusAngle"].as<float>() * (M_PI / 180.0)) *
-                               mFocalLength; // tan(angle) = opp / adj
+    mOrigin           = node["origin"].as<Vector>();
+    mFront            = node["front"].as<Vector>().norm();
+    mTop              = node["top"].as<Vector>().norm();
+    mFocalLength      = node["focalLength"].as<float>();
+    mLensDiskDiameter = tan(node["defocusAngle"].as<float>() * (M_PI / 180.0)) *
+                        mFocalLength; // tan(angle) = opp / adj
     Primitive::sEmissiveGain = node["emissiveGain"].as<float>();
 }
 } // namespace object
@@ -872,7 +847,8 @@ Scene::~Scene()
 
 void Scene::load(std::string sceneYamlPath)
 {
-    YAML::Node data = YAML::LoadFile(sceneYamlPath);
+    size_t     index = 0;
+    YAML::Node data  = YAML::LoadFile(sceneYamlPath);
 
     tinyobj::ObjReaderConfig readerConfig;
     readerConfig.mtl_search_path = "./assets/materials"; // Hardcoded, fight me
@@ -884,60 +860,76 @@ void Scene::load(std::string sceneYamlPath)
     for (const YAML::Node &i : data["objects"])
     {
         std::string type = i["type"].as<std::string>();
-        if (type == "obj")
+        try
         {
-            // Attributes and vertices are stored in the tinyobj::ObjReader object.
-            // We could spend time deep-copying them out, but that seems foolish.
-            // Just keep the reader around.
-
-            // Don't load the same thing multiple times
-            size_t fileIndex;
-            for (fileIndex = 0; fileIndex < mObjFilenames.size(); fileIndex++)
+            if (type == "obj")
             {
-                if (mObjFilenames[fileIndex] == i["path"].as<std::string>())
+                // Attributes and vertices are stored in the tinyobj::ObjReader object.
+                // We could spend time deep-copying them out, but that seems foolish.
+                // Just keep the reader around.
+
+                // Don't load the same thing multiple times
+                size_t fileIndex;
+                for (fileIndex = 0; fileIndex < mObjFilenames.size(); fileIndex++)
                 {
-                    break;
+                    if (mObjFilenames[fileIndex] == i["path"].as<std::string>())
+                    {
+                        break;
+                    }
+                }
+                if (fileIndex != mObjFilenames.size())
+                {
+                    mPrimitives.push_back(
+                        std::make_unique<object::Model>(i, mObjReaders[fileIndex]));
+                }
+                else
+                {
+                    std::string path = i["path"].as<std::string>();
+                    mObjReaders.push_back(tinyobj::ObjReader());
+                    mObjFilenames.push_back(path);
+                    if (!mObjReaders.back().ParseFromFile(path, readerConfig))
+                    {
+                        throw std::invalid_argument("OBJ file parse failed");
+                    }
+                    mPrimitives.push_back(std::make_unique<object::Model>(i, mObjReaders.back()));
                 }
             }
-            if (fileIndex != mObjFilenames.size())
+            else if (type == "sphere")
             {
-                mPrimitives.push_back(std::make_unique<object::Model>(i, mObjReaders[fileIndex]));
+                mPrimitives.push_back(std::make_unique<object::Sphere>(i));
+            }
+            else if (type == "quadric")
+            {
+                mPrimitives.push_back(std::make_unique<object::Quadric>(i));
+            }
+            else if (type == "triangle")
+            {
+                mPrimitives.push_back(std::make_unique<object::Triangle>(i));
+            }
+            else if (type == "quad")
+            {
+                mPrimitives.push_back(std::make_unique<object::Quad>(i));
+            }
+            else if (type == "sphereVolume")
+            {
+                mPrimitives.push_back(std::make_unique<object::SphereVolume>(i));
             }
             else
             {
-                std::string path = i["path"].as<std::string>();
-                mObjReaders.push_back(tinyobj::ObjReader());
-                mObjFilenames.push_back(path);
-                if (!mObjReaders.back().ParseFromFile(path, readerConfig))
-                {
-                    throw std::invalid_argument("OBJ file parse failed");
-                }
-                mPrimitives.push_back(std::make_unique<object::Model>(i, mObjReaders.back()));
+                throw std::invalid_argument("Invalid object in scene");
             }
         }
-        else if (type == "sphere")
+        catch (YAML::BadConversion const &e)
         {
-            mPrimitives.push_back(std::make_unique<object::Sphere>(i));
+            std::cerr << "Error parsing object " << type << " at index " << index << ": "
+                      << e.what() << std::endl;
+            throw;
         }
-        else if (type == "quadric")
+        catch (YAML::InvalidNode const &e)
         {
-            mPrimitives.push_back(std::make_unique<object::Quadric>(i));
-        }
-        else if (type == "triangle")
-        {
-            mPrimitives.push_back(std::make_unique<object::Triangle>(i));
-        }
-        else if (type == "quad")
-        {
-            mPrimitives.push_back(std::make_unique<object::Quad>(i));
-        }
-        else if (type == "sphereVolume")
-        {
-            mPrimitives.push_back(std::make_unique<object::SphereVolume>(i));
-        }
-        else
-        {
-            throw std::invalid_argument("Invalid object in scene");
+            std::cerr << "Missing node in object " << type << " at index " << index << ": "
+                      << e.what() << std::endl;
+            throw;
         }
 
         // Fill in common attributes
@@ -980,6 +972,8 @@ void Scene::load(std::string sceneYamlPath)
             }
             p->mTexture = mTextures[fileIndex].get();
         }
+
+        index++;
     }
 
     if (mPrimitives.size() == 0)

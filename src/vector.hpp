@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common.hpp"
+#include "yaml-cpp/yaml.h"
 #include <cmath>
 #include <cstddef>
 #include <ostream>
@@ -303,3 +304,32 @@ class ModelMatrix
         return vec3;
     }
 };
+
+// yaml-cpp YAML::Node <-> Vector converter
+namespace YAML
+{
+template <> struct convert<Vector>
+{
+    static Node encode(const Vector &rhs)
+    {
+        Node node;
+        node.push_back(rhs.x);
+        node.push_back(rhs.y);
+        node.push_back(rhs.z);
+        return node;
+    }
+
+    static bool decode(const Node &node, Vector &rhs)
+    {
+        if (!node.IsSequence() || node.size() != 3)
+        {
+            return false;
+        }
+
+        rhs.x = node[V_X].as<float>();
+        rhs.y = node[V_Y].as<float>();
+        rhs.z = node[V_Z].as<float>();
+        return true;
+    }
+};
+} // namespace YAML

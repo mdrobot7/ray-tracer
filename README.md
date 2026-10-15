@@ -1,7 +1,8 @@
 # COMS 336 Renderer
 
 ## Build and Run
-Requires GCC (supporting C++11 or newer) and Make. Developed on Windows 11 using MSYS2, but presumably will work on Linux/Mac too.
+
+Requires GCC (supporting C++17 or newer) and Make. Developed on Windows 11 using MSYS2, but presumably will work on Linux/Mac too.
 
 ```
 make setup
@@ -10,10 +11,12 @@ make all
 ```
 
 ### Software Requirements
-- Software: `gcc, g++` supporting C++11 or newer, Make, CMake, Python 3.11+
+
+- Software: `gcc, g++` supporting C++17 or newer, Make, CMake, Python 3.11+
 - Documentation: MiKTeX or something that provides `pdflatex` and LaTeX packages.
 
 ### Makefile Targets
+
 - `setup`: Sets up the project.
 - `docs`: Compiles the documentation.
 - `all`: Compiles and links the embedded software and runs stack analysis
@@ -21,6 +24,7 @@ make all
 - `clean`: Clean the build environment.
 
 ## Third Party Libraries (/lib)
+
 - yaml-cpp
   - Best yaml parser that supports anchors and references.
 - TinyOBJLoader
@@ -29,9 +33,11 @@ make all
   - CImg is more powerful but it needs ImageMagick to load anything other than PPM files. I started there but had to switch over.
 
 ## Future Improvements
+
 - Potential idea: Refactor json files into objects list and index list. Could allow more reusability
 
 ## Tasks
+
 - [x] A camera with configurable position, orientation, and field of view
 - [x] Anti-aliasing
 - [x] Ray/sphere intersections
@@ -48,12 +54,14 @@ make all
 - [x] Emissive materials (lights)
 
 Required extras, at least 25 pts (C-):
+
 - [x] Object instancing: being able to copy/rescale/rotate the same object throughout the scene (10)
       - Done with scene JSON and preventing multiple loads of the same OBJ file.
 - [x] Quads (10)
 - [x] Parallelization (10)
 
 Non required extras:
+
 - [ ] High dynamic range images (10)
 - [x] Volume rendering (smoke, clouds, etc.) (10)
 - [x] Quadrics (15)

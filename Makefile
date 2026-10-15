@@ -15,7 +15,7 @@ TINYOBJLOADER_PATH := $(LIB_DIR)/tinyobjloader
 
 CC := g++
 COMMON_FLAGS := -O3 -g -lpthread
-CFLAGS := -Wall -Wextra
+CFLAGS := -std=c++17 -Wall -Wextra
 CPPFLAGS := -MMD -MP -I$(STB_PATH) -I$(NLOHMANN_JSON_PATH) -I$(TINYOBJLOADER_PATH) -I$(YAML_CPP_INC_DIR)
 LDFLAGS := --gc-sections
 

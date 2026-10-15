@@ -5,7 +5,6 @@ LIB_DIR := ./lib
 
 STB_PATH := $(LIB_DIR)/stb
 
-NLOHMANN_JSON_PATH := $(LIB_DIR)/json/single_include
 YAML_CPP_PATH := $(LIB_DIR)/yaml-cpp
 YAML_CPP_BUILD_DIR := $(YAML_CPP_PATH)/build
 YAML_CPP_INC_DIR := $(YAML_CPP_PATH)/include
@@ -16,7 +15,7 @@ TINYOBJLOADER_PATH := $(LIB_DIR)/tinyobjloader
 CC := g++
 COMMON_FLAGS := -O3 -g -lpthread
 CFLAGS := -std=c++17 -Wall -Wextra
-CPPFLAGS := -MMD -MP -I$(STB_PATH) -I$(NLOHMANN_JSON_PATH) -I$(TINYOBJLOADER_PATH) -I$(YAML_CPP_INC_DIR)
+CPPFLAGS := -MMD -MP -I$(STB_PATH) -I$(TINYOBJLOADER_PATH) -I$(YAML_CPP_INC_DIR)
 LDFLAGS := --gc-sections
 
 SOURCES := $(wildcard $(SRC_DIR)/*.cpp) $(wildcard $(SRC_DIR)/*/*.cpp) # Shell "find" sucks on Windows, so we're doing this

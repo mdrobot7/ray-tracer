@@ -808,30 +808,30 @@ BoundingBox SphereVolume::boundingBox() const
 {
     return Sphere::boundingBox();
 }
+} // namespace object
 
 Camera::Camera() {}
 
 Camera::Camera(const Vector &origin, const Vector &front, const Vector &top, float focalLength,
                float emissiveGain)
 {
-    mOrigin                  = origin;
-    mFront                   = Vector::snorm(front);
-    mTop                     = Vector::snorm(top);
-    mFocalLength             = focalLength;
-    Primitive::sEmissiveGain = emissiveGain;
+    mOrigin                          = origin;
+    mFront                           = Vector::snorm(front);
+    mTop                             = Vector::snorm(top);
+    mFocalLength                     = focalLength;
+    object::Primitive::sEmissiveGain = emissiveGain;
 }
 
 Camera::Camera(const YAML::Node &node)
 {
-    mOrigin           = node["origin"].as<Vector>();
-    mFront            = node["front"].as<Vector>().norm();
-    mTop              = node["top"].as<Vector>().norm();
-    mFocalLength      = node["focalLength"].as<float>();
-    mLensDiskDiameter = tan(node["defocusAngle"].as<float>() * (M_PI / 180.0)) *
-                        mFocalLength; // tan(angle) = opp / adj
-    Primitive::sEmissiveGain = node["emissiveGain"].as<float>();
+    mOrigin                          = node["origin"].as<Vector>();
+    mFront                           = node["front"].as<Vector>().norm();
+    mTop                             = node["top"].as<Vector>().norm();
+    mFocalLength                     = node["focalLength"].as<float>();
+    mLensDiskDiameter                = tan(node["defocusAngle"].as<float>() * (M_PI / 180.0)) *
+                                       mFocalLength; // tan(angle) = opp / adj
+    object::Primitive::sEmissiveGain = node["emissiveGain"].as<float>();
 }
-} // namespace object
 
 Scene::Scene() {}
 
@@ -854,7 +854,7 @@ void Scene::load(std::string sceneYamlPath)
     mPerlin = Perlin();
 
     // Look at scenes/sample.yaml for the format
-    mCamera = object::Camera(data["camera"]);
+    mCamera = Camera(data["camera"]);
     for (const YAML::Node &i : data["objects"])
     {
         std::string type = i["type"].as<std::string>();

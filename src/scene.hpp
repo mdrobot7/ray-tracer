@@ -226,6 +226,7 @@ class SphereVolume : public Sphere
     // No texture lookup support
     BoundingBox boundingBox() const override;
 };
+}; // namespace object
 
 /**
  * aspectRatio x 1 "unit" image plane. Origin vector points to the center
@@ -247,12 +248,10 @@ class Camera
     Camera(const YAML::Node &node);
 };
 
-}; // namespace object
-
 class Scene
 {
   public:
-    object::Camera mCamera;
+    Camera mCamera;
 
     // List of scene objects. Must be unique_ptr otherwise polymorphism breaks
     std::vector<std::unique_ptr<object::Primitive>> mPrimitives;

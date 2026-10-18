@@ -1,7 +1,11 @@
 #include "ray.hpp"
 #include "color.hpp"
 
-Ray::Ray() {}
+Ray::Ray()
+{
+    mColor             = Color(1.0, 1.0, 1.0);
+    mIndexOfRefraction = 1.0;
+}
 
 Ray::Ray(Vector origin, Vector dir)
 {

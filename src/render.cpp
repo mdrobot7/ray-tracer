@@ -42,9 +42,7 @@ Render::Render(Scene &scene, BoundingVolumeHierarchy &bvh, int width, int height
 
     mMaxBounces = maxBounces;
 
-    setupImgPlane();
-    Vector focalLength = mScene.mCamera.mFront * mScene.mCamera.mFocalLength;
-    mPinhole           = mScene.mCamera.mOrigin - focalLength;
+    mScene.mCamera.setResolution(width, height);
 }
 
 Render::~Render()
@@ -164,9 +162,8 @@ void Render::renderPixel()
         Color pixelColor = {0.0, 0.0, 0.0};
         for (int i = 0; i < mAntiAliasingLevel; i++)
         {
-            Vector origin, dir;
-            getImgPlanePixelRandomDefocus(nextY, nextX, origin, dir);
-            Ray inRay = Ray(origin, dir);
+            Ray inRay = Ray();
+            mScene.mCamera.getRay(nextY, nextX, inRay);
 
             // Trace the ray. Keep tracing until we run out of bounces, miss everything, or we get
             // absorbed.
@@ -224,61 +221,4 @@ uint8_t *Render::getPixel(int y, int x)
         throw std::invalid_argument("Invalid coordinate value");
     }
     return mFb + (y * mWidth + x) * 3;
-}
-
-void Render::setupImgPlane()
-{
-    /**
-     * The math:
-     * - Direction vector will *always* be normal to the image plane.
-     *   The direction vector is also guaranteed to be normalized.
-     * - Top vector will *always* be in the plane. Also guaranteed to be normalized.
-     * - Top vector will *always* be parallel to the height vector.
-     * - Goal: Find the vectors for the width and height of the image plane
-     *         and the position of the top left corner.
-     *
-     * The direction and top vectors define the image plane, it's just not in
-     * the right spot and not a fixed size. We're also missing the width vector.
-     *
-     * Width vector can be found with a cross product, then it's just a matter of
-     * translating the plane into place to find the top left corner. It's centered
-     * at the origin now, account for the image plane size, focal length, and camera
-     * position.
-     *
-     * The width and height vectors should be the width and height of one pixel. The image
-     * plane is aspectRatio x 1 "unit", so normalize and divide by the resolution.
-     */
-
-    float aspectRatio = (float)mWidth / mHeight;
-
-    mPlaneHeight     = mScene.mCamera.mTop * (-1.0 / mHeight);
-    Vector widthNorm = Vector::scross3(mScene.mCamera.mFront, mScene.mCamera.mTop).norm();
-    mPlaneWidth      = widthNorm * (aspectRatio / mWidth);
-
-    Vector halfTop   = mScene.mCamera.mTop * 0.5;
-    Vector halfWidth = widthNorm * (0.5 * aspectRatio);
-    mPlaneOrigin     = mScene.mCamera.mOrigin + (halfTop - halfWidth);
-}
-
-void Render::getImgPlanePixelRandomDefocus(int y, int x, Vector &origin, Vector &dir)
-{
-    // Find a random point on the lens disk, shoot it through the center of
-    // an image plane pixel
-    float randomRadius = randomDouble() * mScene.mCamera.mLensDiskDiameter;
-    float randomAngle  = randomDouble() * 2.0 * M_PI;
-
-    // Convert polar to cartesian, scale relative to camera axes, add in camera origin
-    Vector camRight        = Vector::scross3(mScene.mCamera.mFront, mScene.mCamera.mTop).norm();
-    Vector randomX         = camRight * (randomRadius * cos(randomAngle));
-    Vector randomY         = mScene.mCamera.mTop * (randomRadius * sin(randomAngle));
-    Vector randomLensPoint = mPinhole + randomX + randomY;
-
-    // Randomize location inside image plane pixel
-    Vector dx = mPlaneWidth * (x + randomDouble());
-    Vector dy = mPlaneHeight * (y + randomDouble());
-
-    // Find vector to image plane pixel, then find vector between lens and
-    // image plane pixel
-    origin = mPlaneOrigin + dy + dx;
-    dir    = (origin - randomLensPoint).norm();
 }

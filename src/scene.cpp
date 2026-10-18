@@ -812,25 +812,74 @@ BoundingBox SphereVolume::boundingBox() const
 
 Camera::Camera() {}
 
-Camera::Camera(const Vector &origin, const Vector &front, const Vector &top, float focalLength,
+Camera::Camera(const Vector &origin, const Vector &rotation, float focalLength, float defocusAngle,
                float emissiveGain)
 {
-    mOrigin                          = origin;
-    mFront                           = Vector::snorm(front);
-    mTop                             = Vector::snorm(top);
-    mFocalLength                     = focalLength;
+    mOrigin           = origin;
+    mRotation         = Matrix(Vector(0, 0, 0), rotation, Vector(1, 1, 1));
+    mLensDiskDiameter = tan(defocusAngle * (M_PI / 180.0)) * focalLength; // tan(angle) = opp / adj
     object::Primitive::sEmissiveGain = emissiveGain;
+
+    mPinhole = Vector(0, 0, focalLength);
 }
 
 Camera::Camera(const YAML::Node &node)
 {
-    mOrigin                          = node["origin"].as<Vector>();
-    mFront                           = node["front"].as<Vector>().norm();
-    mTop                             = node["top"].as<Vector>().norm();
-    mFocalLength                     = node["focalLength"].as<float>();
-    mLensDiskDiameter                = tan(node["defocusAngle"].as<float>() * (M_PI / 180.0)) *
-                                       mFocalLength; // tan(angle) = opp / adj
+    float focalLength = node["focalLength"].as<float>();
+
+    mOrigin           = node["origin"].as<Vector>();
+    mRotation         = Matrix(Vector(0, 0, 0), node["rotation"].as<Vector>(), Vector(1, 1, 1));
+    mLensDiskDiameter = tan(node["defocusAngle"].as<float>() * (M_PI / 180.0)) *
+                        focalLength; // tan(angle) = opp / adj
     object::Primitive::sEmissiveGain = node["emissiveGain"].as<float>();
+
+    mPinhole = Vector(0, 0, focalLength);
+}
+
+void Camera::setResolution(int width, int height)
+{
+    float aspectRatio = (float)width / height;
+
+    mPlaneHeight = Vector(0, -1.0 / height, 0);
+    mPlaneWidth  = Vector(aspectRatio / width, 0, 0);
+    mPlaneOrigin = Vector(-0.5 * aspectRatio, 0.5, 0);
+}
+
+void Camera::getRay(int y, int x, Ray &ray)
+{
+    /*
+     * Image plane is set up centered on the Z axis in the XY plane. Pinhole is at
+     * [0, 0, -mFocalLength].
+     *
+     * 1. Make the defocus disc with diameter `mLensDiskDiameter` centered
+     * on the pinhole.
+     * 2. Pick a random point on the defocus disk.
+     * 3. Pick a random point inside the pixel on the image plane to set the
+     * ray origin.
+     * 4. Shoot a ray from the defocus plane through the image plane to set
+     * the direction.
+     * 5. Offset the origin by mOrigin, transform the direction by mRotation.
+     */
+
+    float randomRadius = randomDouble() * mLensDiskDiameter;
+    float randomAngle  = randomDouble() * 2.0 * M_PI;
+
+    // Calculate the cartesian coordinates of the random defocus disk point
+    Vector randomCartesian = randomRadius * Vector(cos(randomAngle), sin(randomAngle), 0);
+    Vector randomLensPoint = mPinhole + randomCartesian;
+
+    // Randomize location inside image plane pixel
+    Vector dx = mPlaneWidth * (x + randomDouble());
+    Vector dy = mPlaneHeight * (y + randomDouble());
+
+    // Find vector to image plane pixel, then find vector between lens and
+    // image plane pixel
+    ray.mOrigin = mPlaneOrigin + dy + dx;
+    ray.mDir    = (ray.mOrigin - randomLensPoint).norm();
+
+    // Apply origin and direction corrections
+    ray.mOrigin += mOrigin;
+    mRotation.mul(ray.mDir);
 }
 
 Scene::Scene() {}

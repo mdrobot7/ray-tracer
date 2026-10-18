@@ -236,16 +236,39 @@ class SphereVolume : public Sphere
 class Camera
 {
   public:
-    Vector mOrigin;
-    Vector mFront;
-    Vector mTop;
-    float  mFocalLength;
-    float  mLensDiskDiameter;
+    Vector mOrigin; // Center of the image plane
+    Matrix mRotation;
+    float  mLensDiskDiameter; // Diameter of the defocus disk
+
+    Vector mPinhole; // Location of the pinhole camera/defocus disk
+
+    // Image plane origin (top left). Width and height of one pixel (height pointing down)
+    Vector mPlaneOrigin, mPlaneWidth, mPlaneHeight;
 
     Camera();
-    Camera(const Vector &origin, const Vector &front, const Vector &top, float focalLength,
+    Camera(const Vector &origin, const Vector &rotation, float focalLength, float defocusAngle,
            float emissiveGain);
     Camera(const YAML::Node &node);
+
+    /**
+     * @brief Set the camera resolution, which sets up the image plane
+     * and camera aspect ratio.
+     *
+     * @param width Image width, pixels
+     * @param height Image height, pixels
+     */
+    void setResolution(int width, int height);
+
+    /**
+     * @brief Get a vector coming from a particular pixel in the image
+     * plane specified by x, y, accounting for defocus blur. Origin is in
+     * the top left corner, Y points down.
+     *
+     * @param y Y-index in the image plane
+     * @param x X-index in the image plane
+     * @param ray Ray to populate
+     */
+    void getRay(int y, int x, Ray &ray);
 };
 
 class Scene

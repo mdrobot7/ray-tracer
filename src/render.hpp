@@ -50,10 +50,6 @@ class Render
 
     int mMaxBounces; // Max bounces per ray before we call it black
 
-    Vector mPlaneWidth, mPlaneHeight,
-        mPlaneOrigin; // Width/heights are normalized, origin is top left corner
-    Vector mPinhole;  // Location of the pinhole camera
-
     /**
      * @brief Job for an individual thread in the thread
      * pool. Renders the next pixel in the queue and puts
@@ -66,16 +62,4 @@ class Render
      * specified by x, y.
      */
     uint8_t *getPixel(int y, int x);
-
-    /**
-     * @brief Set up the vectors associated with the image plane.
-     *
-     */
-    void setupImgPlane();
-
-    /**
-     * @brief Get a vector coming from a particular pixel in the image
-     * plane specified by x, y, accounting for defocus blur.
-     */
-    void getImgPlanePixelRandomDefocus(int y, int x, Vector &origin, Vector &dir);
 };

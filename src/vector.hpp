@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common.hpp"
+#include "yaml-cpp/yaml.h"
 #include <cmath>
 #include <cstddef>
 #include <ostream>
@@ -245,21 +246,92 @@ class Vector
     }
 };
 
-class ModelMatrix
+class Matrix
 {
   public:
-    Vector mOrigin;
-    Vector mFront; // Model's +Z axis
-    Vector mTop;   // Model's +Y axis
-    Vector mRight; // Model's +X axis
-    Vector mScale;
+    float mMatrix[4][4]; // [row][col]
 
-    constexpr ModelMatrix() {}
-    constexpr ModelMatrix(const Vector &origin, const Vector &front, const Vector &top,
-                          const Vector &scale)
-        : mOrigin(origin), mFront(front), mTop(top), mRight(), mScale(scale)
+    constexpr Matrix() : mMatrix{} {}
+
+    // rotation vector is in *degrees* around the x, y, and z axes
+    constexpr Matrix(const Vector &origin, const Vector &rotation, const Vector &scale) : mMatrix{}
     {
-        mRight = Vector::scross3(-mFront, mTop);
+        const float pi_180 = M_PI / 180.0;
+        const float sin_x  = sin(rotation[V_X] * pi_180);
+        const float cos_x  = cos(rotation[V_X] * pi_180);
+        const float sin_y  = sin(rotation[V_Y] * pi_180);
+        const float cos_y  = cos(rotation[V_Y] * pi_180);
+        const float sin_z  = sin(rotation[V_Z] * pi_180);
+        const float cos_z  = cos(rotation[V_Z] * pi_180);
+        float       rotationMat[4][4]{};
+        float       scaleMat[4][4]{};
+        float       translationMat[4][4]{};
+        float       translationScaleMat[4][4]{};
+
+        // Assemble rotation, scale, and translation matrices
+        // Rotation is X, then Y, then Z
+        rotationMat[0][0] = cos_y * cos_z;
+        rotationMat[0][1] = sin_x * sin_y * cos_z - cos_x * sin_z;
+        rotationMat[0][2] = cos_x * sin_y * cos_z + sin_x * sin_z;
+
+        rotationMat[1][0] = cos_y * sin_z;
+        rotationMat[1][1] = sin_x * sin_y * sin_z + cos_x * cos_z;
+        rotationMat[1][2] = cos_x * sin_y * sin_z - sin_x * cos_z;
+
+        rotationMat[2][0] = -sin_y;
+        rotationMat[2][1] = sin_x * cos_y;
+        rotationMat[2][2] = cos_x * cos_y;
+
+        rotationMat[3][3] = 1.0;
+
+        scaleMat[0][0] = scale[V_X];
+        scaleMat[1][1] = scale[V_Y];
+        scaleMat[2][2] = scale[V_Z];
+        scaleMat[3][3] = 1.0;
+
+        translationMat[0][3] = origin[V_X];
+        translationMat[1][3] = origin[V_Y];
+        translationMat[2][3] = origin[V_Z];
+        translationMat[0][0] = 1.0;
+        translationMat[1][1] = 1.0;
+        translationMat[2][2] = 1.0;
+        translationMat[3][3] = 1.0;
+
+        // Multiply matrices in *reverse* order, transformations
+        // apply in the order: rotate, scale, translate
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                for (int k = 0; k < 4; k++)
+                {
+                    translationScaleMat[i][j] += translationMat[i][k] * scaleMat[k][j];
+                }
+            }
+        }
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                for (int k = 0; k < 4; k++)
+                {
+                    mMatrix[i][j] += translationScaleMat[i][k] * rotationMat[k][j];
+                }
+            }
+        }
+    }
+
+    friend std::ostream &operator<<(std::ostream &os, const Matrix &m)
+    {
+        os << "[ " << m.mMatrix[0][0] << ", " << m.mMatrix[0][1] << ", " << m.mMatrix[0][2] << ", "
+           << m.mMatrix[0][3] << " ]" << std::endl;
+        os << "[ " << m.mMatrix[1][0] << ", " << m.mMatrix[1][1] << ", " << m.mMatrix[1][2] << ", "
+           << m.mMatrix[1][3] << " ]" << std::endl;
+        os << "[ " << m.mMatrix[2][0] << ", " << m.mMatrix[2][1] << ", " << m.mMatrix[2][2] << ", "
+           << m.mMatrix[2][3] << " ]" << std::endl;
+        os << "[ " << m.mMatrix[3][0] << ", " << m.mMatrix[3][1] << ", " << m.mMatrix[3][2] << ", "
+           << m.mMatrix[3][3] << " ]" << std::endl;
+        return os;
     }
 
     /**
@@ -271,35 +343,50 @@ class ModelMatrix
      */
     constexpr Vector &mul(Vector &vec3) const
     {
-        /*
-            Essentially this amounts to a change of basis,
-            translation, and scale. Doing it with discrete operations
-            instead of a single homogeneous matrix because
-            it's easier to write and performance is probably
-            close enough.
+        float       temp[4]        = {};
+        const float homogeneous[4] = {vec3[V_X], vec3[V_Y], vec3[V_Z], 1.0};
 
-            Little hack  for change of basis because top and
-            front are guaranteed to be orthogonal:
-            V_i = (V dot b_i) / |b_i|^2
-        */
-        Vector temp;
+        // Multiply M * v, with v being a column vector
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                temp[i] += mMatrix[i][j] * homogeneous[j];
+            }
+        }
 
-        // Handle rotation with change of basis
-        temp.x = Vector::dot(vec3, mRight) / Vector::dot(mRight, mRight);
-        temp.y = Vector::dot(vec3, mTop) / Vector::dot(mTop, mTop);
-        temp.z = Vector::dot(vec3, mFront) / Vector::dot(mFront, mFront);
-
-        // Handle scale
-        temp.x *= mScale.x;
-        temp.y *= mScale.y;
-        temp.z *= mScale.z;
-
-        // Handle translation
-        temp.x += mOrigin.x;
-        temp.y += mOrigin.y;
-        temp.z += mOrigin.z;
-
-        vec3 = temp;
+        vec3[V_X] = temp[0] / temp[3];
+        vec3[V_Y] = temp[1] / temp[3];
+        vec3[V_Z] = temp[2] / temp[3];
         return vec3;
     }
 };
+
+// yaml-cpp YAML::Node <-> Vector converter
+namespace YAML
+{
+template <> struct convert<Vector>
+{
+    static Node encode(const Vector &rhs)
+    {
+        Node node;
+        node.push_back(rhs.x);
+        node.push_back(rhs.y);
+        node.push_back(rhs.z);
+        return node;
+    }
+
+    static bool decode(const Node &node, Vector &rhs)
+    {
+        if (!node.IsSequence() || node.size() != 3)
+        {
+            return false;
+        }
+
+        rhs.x = node[V_X].as<float>();
+        rhs.y = node[V_Y].as<float>();
+        rhs.z = node[V_Z].as<float>();
+        return true;
+    }
+};
+} // namespace YAML

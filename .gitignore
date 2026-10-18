@@ -1,5 +1,6 @@
 build/*
 *.ppm
+*.bmp
 .vscode/*
 .cache/*
 render.exe.stackdump

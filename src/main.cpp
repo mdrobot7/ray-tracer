@@ -12,8 +12,8 @@
     "usage: render.exe [options]\n\n"                                                              \
     "options:\n"                                                                                   \
     "-h                 Show this help message and exit\n"                                         \
-    "-s [SCENE_JSON]    Scene file for the renderer.\n"                                            \
-    "                       Default: scenes/sample.json\n"                                         \
+    "-s [SCENE_YAML]    Scene file for the renderer.\n"                                            \
+    "                       Default: scenes/sample.yaml\n"                                         \
     "-r [RESOLUTION]    Resolution for the renderer, in the form\n"                                \
     "                       [width]x[height]. Default: 1024x768\n"                                 \
     "-a [AA_LEVEL]      Anti-aliasing level (number of rays per pixel).\n"                         \
@@ -26,7 +26,7 @@
 int main(int argc, char *argv[])
 {
     int         opt;
-    std::string scenePath = "scenes/sample.json";
+    std::string scenePath = "scenes/sample.yaml";
     int         width = 1024, height = 768;
     int         antiAliasingLevel = 1;
     int         depth             = 50;

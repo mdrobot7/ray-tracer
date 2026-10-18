@@ -3,7 +3,6 @@
 #include "scene.hpp"
 
 #include <algorithm>
-#include <typeinfo>
 
 BoundingVolumeHierarchy::BoundingVolumeHierarchy()
 {
@@ -39,25 +38,19 @@ BoundingVolumeHierarchy::BoundingVolumeHierarchy(
     // Go down the tree, generating nodes and assigning bounding boxes.
     // Skip the camera, it doesn't have a bounding box (it's still a Primitive
     // for json reasons).
-    if (range == 1 && typeid(*primitives[start]) != typeid(object::Camera))
+    if (range == 1)
     {
         mPrimitive = primitives[start].get();
         mBbox      = mPrimitive->mBoundingBox;
     }
     else if (range == 2)
     {
-        if (typeid(*primitives[start]) != typeid(object::Camera))
-        {
-            mLeft             = new BoundingVolumeHierarchy();
-            mLeft->mPrimitive = primitives[start].get();
-            mLeft->mBbox      = mLeft->mPrimitive->mBoundingBox;
-        }
-        if (typeid(*primitives[start + 1]) != typeid(object::Camera))
-        {
-            mRight             = new BoundingVolumeHierarchy();
-            mRight->mPrimitive = primitives[start + 1].get();
-            mRight->mBbox      = mRight->mPrimitive->mBoundingBox;
-        }
+        mLeft              = new BoundingVolumeHierarchy();
+        mLeft->mPrimitive  = primitives[start].get();
+        mLeft->mBbox       = mLeft->mPrimitive->mBoundingBox;
+        mRight             = new BoundingVolumeHierarchy();
+        mRight->mPrimitive = primitives[start + 1].get();
+        mRight->mBbox      = mRight->mPrimitive->mBoundingBox;
     }
     else
     {

@@ -1,12 +1,12 @@
 #pragma once
 #include "boundingBox.hpp"
 #include "color.hpp"
-#include "nlohmann/json.hpp"
 #include "perlin.hpp"
 #include "ray.hpp"
 #include "stb.hpp"
 #include "tiny_obj_loader.h"
 #include "vector.hpp"
+#include "yaml-cpp/yaml.h"
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -35,7 +35,7 @@ class Primitive
     Perlin             *mPerlin;
 
     Primitive();
-    Primitive(nlohmann::json &json);
+    Primitive(const YAML::Node &node);
 
     virtual ~Primitive() {};
 
@@ -122,7 +122,7 @@ class Triangle : public Primitive
     Triangle();
     Triangle(Vector vertices[3], Vector texcoords[3], enum Color::Surface surface,
              float indexOfRefraction, const Color &color);
-    Triangle(nlohmann::json &json);
+    Triangle(const YAML::Node &node);
 
     enum Collision collide(Ray &incoming, float &t, Color &color) const override;
     BoundingBox    boundingBox() const override;
@@ -145,7 +145,7 @@ class Quadric : public Primitive
     Quadric(const Vector &center, float a2, float b2, float c2, float d2, float maxOnAxis,
             float maxOffAxis, const std::string &axis, enum Color::Surface surface,
             float indexOfRefraction, const Color &color);
-    Quadric(nlohmann::json json);
+    Quadric(const YAML::Node &node);
 
     virtual enum Collision collide(Ray &incoming, float &t, Color &color) const override;
     virtual BoundingBox    boundingBox() const override;
@@ -168,7 +168,7 @@ class Sphere : public Primitive
     Sphere();
     Sphere(const Vector &origin, float radius, enum Color::Surface surface, float indexOfRefraction,
            const Color &color);
-    Sphere(nlohmann::json &json);
+    Sphere(const YAML::Node &node);
 
     virtual enum Collision collide(Ray &incoming, float &t, Color &color) const override;
     virtual BoundingBox    boundingBox() const override;
@@ -187,7 +187,7 @@ class Quad : public Primitive
     Quad();
     Quad(const Vector &origin, const Vector &width, const Vector &height,
          enum Color::Surface surface, float indexOfRefraction, const Color &color);
-    Quad(nlohmann::json &json);
+    Quad(const YAML::Node &node);
 
     enum Collision collide(Ray &incoming, float &t, Color &color) const override;
     BoundingBox    boundingBox() const override;
@@ -200,14 +200,14 @@ class Quad : public Primitive
 class Model : public Primitive
 {
   public:
-    ModelMatrix mModelMatrix;
+    Matrix mMatrix;
 
     tinyobj::ObjReader &mObj;
 
-    Model(tinyobj::ObjReader &obj, const Vector &origin, const Vector &front, const Vector &top,
+    Model(tinyobj::ObjReader &obj, const Vector &origin, const Vector &rotation,
           const Vector &scale, enum Color::Surface surface, float indexOfRefraction,
           const Color &color);
-    Model(nlohmann::json &json, tinyobj::ObjReader &obj);
+    Model(const YAML::Node &node, tinyobj::ObjReader &obj);
 
     enum Collision collide(Ray &incoming, float &t, Color &color) const override;
     // No texture lookup support
@@ -220,12 +220,13 @@ class SphereVolume : public Sphere
     float mNegInvDensity;
 
     SphereVolume(const Vector &origin, float radius, float density, Color &color);
-    SphereVolume(nlohmann::json &json);
+    SphereVolume(const YAML::Node &node);
 
     enum Collision collide(Ray &incoming, float &t, Color &color) const override;
     // No texture lookup support
     BoundingBox boundingBox() const override;
 };
+}; // namespace object
 
 /**
  * aspectRatio x 1 "unit" image plane. Origin vector points to the center
@@ -235,24 +236,45 @@ class SphereVolume : public Sphere
 class Camera
 {
   public:
-    Vector mOrigin;
-    Vector mFront;
-    Vector mTop;
-    float  mFocalLength;
-    float  mLensDiskDiameter;
+    Vector mOrigin; // Center of the image plane
+    Matrix mRotation;
+    float  mLensDiskDiameter; // Diameter of the defocus disk
+
+    Vector mPinhole; // Location of the pinhole camera/defocus disk
+
+    // Image plane origin (top left). Width and height of one pixel (height pointing down)
+    Vector mPlaneOrigin, mPlaneWidth, mPlaneHeight;
 
     Camera();
-    Camera(const Vector &origin, const Vector &front, const Vector &top, float focalLength,
+    Camera(const Vector &origin, const Vector &rotation, float focalLength, float defocusAngle,
            float emissiveGain);
-    Camera(nlohmann::json &json);
-};
+    Camera(const YAML::Node &node);
 
-}; // namespace object
+    /**
+     * @brief Set the camera resolution, which sets up the image plane
+     * and camera aspect ratio.
+     *
+     * @param width Image width, pixels
+     * @param height Image height, pixels
+     */
+    void setResolution(int width, int height);
+
+    /**
+     * @brief Get a vector coming from a particular pixel in the image
+     * plane specified by x, y, accounting for defocus blur. Origin is in
+     * the top left corner, Y points down.
+     *
+     * @param y Y-index in the image plane
+     * @param x X-index in the image plane
+     * @param ray Ray to populate
+     */
+    void getRay(int y, int x, Ray &ray);
+};
 
 class Scene
 {
   public:
-    object::Camera mCamera;
+    Camera mCamera;
 
     // List of scene objects. Must be unique_ptr otherwise polymorphism breaks
     std::vector<std::unique_ptr<object::Primitive>> mPrimitives;
@@ -271,12 +293,12 @@ class Scene
     ~Scene();
 
     /**
-     * @brief Load the scene data from a JSON file and
+     * @brief Load the scene data from a YAML file and
      * populate all of the objects at their correct coordinates.
      *
-     * @param sceneJsonPath
+     * @param sceneYamlPath
      */
-    void load(std::string sceneJsonPath);
+    void load(std::string sceneYamlPath);
 
   private:
 };

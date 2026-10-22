@@ -815,8 +815,7 @@ Camera::Camera() {}
 Camera::Camera(const Vector &origin, const Vector &rotation, float focalLength, float defocusAngle,
                float emissiveGain)
 {
-    mOrigin           = origin;
-    mRotation         = Matrix(Vector(0, 0, 0), rotation, Vector(1, 1, 1));
+    mMatrix           = Matrix(origin, rotation, Vector(1, 1, 1));
     mLensDiskDiameter = tan(defocusAngle * (M_PI / 180.0)) * focalLength; // tan(angle) = opp / adj
     object::Primitive::sEmissiveGain = emissiveGain;
 
@@ -827,8 +826,7 @@ Camera::Camera(const YAML::Node &node)
 {
     float focalLength = node["focalLength"].as<float>();
 
-    mOrigin           = node["origin"].as<Vector>();
-    mRotation         = Matrix(Vector(0, 0, 0), node["rotation"].as<Vector>(), Vector(1, 1, 1));
+    mMatrix = Matrix(node["origin"].as<Vector>(), node["rotation"].as<Vector>(), Vector(1, 1, 1));
     mLensDiskDiameter = tan(node["defocusAngle"].as<float>() * (M_PI / 180.0)) *
                         focalLength; // tan(angle) = opp / adj
     object::Primitive::sEmissiveGain = node["emissiveGain"].as<float>();
@@ -878,8 +876,8 @@ void Camera::getRay(int y, int x, Ray &ray)
     ray.mDir    = (ray.mOrigin - randomLensPoint).norm();
 
     // Apply origin and direction corrections
-    ray.mOrigin += mOrigin;
-    mRotation.mul(ray.mDir);
+    mMatrix.mul(ray.mOrigin);
+    mMatrix.mul_no_trans(ray.mDir);
 }
 
 Scene::Scene() {}

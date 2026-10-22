@@ -236,8 +236,7 @@ class SphereVolume : public Sphere
 class Camera
 {
   public:
-    Vector mOrigin; // Center of the image plane
-    Matrix mRotation;
+    Matrix mMatrix;
     float  mLensDiskDiameter; // Diameter of the defocus disk
 
     Vector mPinhole; // Location of the pinhole camera/defocus disk
@@ -247,7 +246,7 @@ class Camera
 
     Camera();
     Camera(const Vector &origin, const Vector &rotation, float focalLength, float defocusAngle,
-           float emissiveGain);
+           float emissiveGain); // Origin is center of image plane
     Camera(const YAML::Node &node);
 
     /**

@@ -360,6 +360,32 @@ class Matrix
         vec3[V_Z] = temp[2] / temp[3];
         return vec3;
     }
+
+    /**
+     * @brief Turn a 3-vector into a homogeneous 4-vector,
+     * multiply by the model matrix, convert back to a
+     * 3-vector and return without applying translation.
+     *
+     * Done by making the homogeneous vector into [x, y, z, 0].
+     *
+     * Modifies vec3 and returns a reference to vec3.
+     */
+    constexpr Vector &mul_no_trans(Vector &vec3) const
+    {
+        const float homogeneous[4] = {vec3[V_X], vec3[V_Y], vec3[V_Z], 0};
+
+        // Multiply M * v, with v being a column vector
+        for (int i = 0; i < 3; i++)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                vec3[i] += mMatrix[i][j] * homogeneous[j];
+            }
+        }
+
+        // No div by w since w will always be 0 with our 4x4 matrices
+        return vec3;
+    }
 };
 
 // yaml-cpp YAML::Node <-> Vector converter
